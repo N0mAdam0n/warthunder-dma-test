@@ -10,6 +10,8 @@
 #include <tchar.h>
 #include <fstream>
 #include <iostream>
+#include <vector>
+#include <windows.h>
 
 #include <imgui_stdlib.h>
 //kmbox
@@ -166,51 +168,89 @@ bool Window::CreateAndRunWindow(HINSTANCE hInstance, Warthunder* wt, UnitHandler
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
 	ImGuiIO& io = ImGui::GetIO();
-	//font inits
+	//font inits - robust loader with fallback (prevents "Could not load font file!" crash)
 	{
+		auto resolve_font = [](const char* filename) -> std::string {
+			// Get directory of the running executable (most reliable)
+			char exePath[MAX_PATH] = { 0 };
+			GetModuleFileNameA(nullptr, exePath, MAX_PATH);
+			std::string exeDir(exePath);
+			size_t lastSlash = exeDir.find_last_of("\\/");
+			if (lastSlash != std::string::npos)
+				exeDir = exeDir.substr(0, lastSlash + 1);
 
-		ImFont* main_font = io.Fonts->AddFontFromFileTTF(
-			"fonts/NotoSans.ttf",
-			18.0f,
-			nullptr,
-			io.Fonts->GetGlyphRangesCyrillic()
-		);
+			// Candidate locations (covers running from Build\Debug\, from VS debugger cwd, etc.)
+			std::vector<std::string> candidates = {
+				exeDir + "fonts\\" + filename,           // next to exe / Build\Debug\fonts\
+				exeDir + "..\\fonts\\" + filename,       // if exe is deeper
+				exeDir + "..\\..\\fonts\\" + filename,
+				std::string("fonts\\") + filename,       // relative to current working dir
+				std::string("..\\fonts\\") + filename,
+				std::string("..\\..\\fonts\\") + filename,
+				filename
+			};
 
+			for (const auto& p : candidates) {
+				std::ifstream test(p, std::ios::binary);
+				if (test.good()) {
+					return p;
+				}
+			}
+			return {};
+		};
 
-		ImFontConfig config_jp;
-		config_jp.MergeMode = true;
-		io.Fonts->AddFontFromFileTTF(
-			"fonts/NotoSansJP.ttf",
-			18.0f,
-			&config_jp,
-			io.Fonts->GetGlyphRangesJapanese()
-		);
+		ImFont* main_font = nullptr;
 
+		std::string mainPath = resolve_font("NotoSans.ttf");
+		if (!mainPath.empty()) {
+			main_font = io.Fonts->AddFontFromFileTTF(
+				mainPath.c_str(),
+				18.0f,
+				nullptr,
+				io.Fonts->GetGlyphRangesCyrillic()
+			);
+			if (main_font) {
+				LOG("[Font] Loaded main font: %s\n", mainPath.c_str());
+			}
+		}
 
-		ImFontConfig config_kr;
-		config_kr.MergeMode = true;
-		io.Fonts->AddFontFromFileTTF(
-			"fonts/NotoSansKR.ttf",
-			18.0f,
-			&config_kr,
-			io.Fonts->GetGlyphRangesKorean()
-		);
+		if (!main_font) {
+			printf("[Font] WARNING: Could not load NotoSans.ttf from any known location. Using ImGui default font.\n");
+			main_font = io.Fonts->AddFontDefault();
+		}
 
+		// Merge CJK fonts if available (MergeMode)
+		std::string jpPath = resolve_font("NotoSansJP.ttf");
+		if (!jpPath.empty()) {
+			ImFontConfig config_jp;
+			config_jp.MergeMode = true;
+			ImFont* f = io.Fonts->AddFontFromFileTTF(
+				jpPath.c_str(),
+				18.0f,
+				&config_jp,
+				io.Fonts->GetGlyphRangesJapanese()
+			);
+			if (f) LOG("[Font] Merged JP font: %s\n", jpPath.c_str());
+		}
 
+		std::string krPath = resolve_font("NotoSansKR.ttf");
+		if (!krPath.empty()) {
+			ImFontConfig config_kr;
+			config_kr.MergeMode = true;
+			ImFont* f = io.Fonts->AddFontFromFileTTF(
+				krPath.c_str(),
+				18.0f,
+				&config_kr,
+				io.Fonts->GetGlyphRangesKorean()
+			);
+			if (f) LOG("[Font] Merged KR font: %s\n", krPath.c_str());
+		}
 
-
-		//ImFontConfig config_cn;
-		//config_cn.MergeMode = true;
-		//io.Fonts->AddFontFromFileTTF(
-		//	"fonts/NotoSansSC.ttf",
-		//	18.0f,
-		//	&config_cn,
-		//	io.Fonts->GetGlyphRangesChineseSimplifiedCommon()
-		//);
-
+		// Chinese (commented in original)
+		// std::string scPath = resolve_font("NotoSansSC.ttf");
+		// if (!scPath.empty()) { ... }
 
 		io.Fonts->Build();
-
 		io.FontDefault = main_font;
 	}
 	(void)io;

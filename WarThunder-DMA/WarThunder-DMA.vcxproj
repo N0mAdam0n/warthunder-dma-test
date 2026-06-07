@@ -95,12 +95,6 @@
     <IncludePath>$(SolutionDir)Include</IncludePath>
     <LibraryPath>$(SolutionDir)Lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
-  <!-- Auto-copy runtime DLLs and support files (leechcore, vmm, FTD3XX, symsrv etc.) from resources/
-       to the output directory on every build. This prevents "missing leechcore.dll / vmm.dll" after
-       clean/rebuild or when switching Debug/Release. -->
-  <PropertyGroup>
-    <PostBuildEvent>cmd /c "xcopy /Y /D /Q "$(SolutionDir)resources\leechcore.dll" "$(OutDir)" &gt;nul 2&gt;&amp;1 &amp; xcopy /Y /D /Q "$(SolutionDir)resources\vmm.dll" "$(OutDir)" &gt;nul 2&gt;&amp;1 &amp; xcopy /Y /D /Q "$(SolutionDir)resources\FTD3XX.dll" "$(OutDir)" &gt;nul 2&gt;&amp;1 &amp; xcopy /Y /D /Q "$(SolutionDir)resources\dbghelp.dll" "$(OutDir)" &gt;nul 2&gt;&amp;1 &amp; xcopy /Y /D /Q "$(SolutionDir)resources\symsrv.dll" "$(OutDir)" &gt;nul 2&gt;&amp;1 &amp; xcopy /Y /D /Q "$(SolutionDir)resources\info.db" "$(OutDir)" &gt;nul 2&gt;&amp;1 &amp; xcopy /Y /D /Q "$(SolutionDir)resources\vmmyara.dll" "$(OutDir)" &gt;nul 2&gt;&amp;1 &amp; echo [PostBuild] DMA runtime DLLs + info.db copied to $(OutDir)"</PostBuildEvent>
-  </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
@@ -160,6 +154,30 @@
     <Manifest>
       <AdditionalManifestFiles>$(SolutionDir)app.manifest %(AdditionalManifestFiles)</AdditionalManifestFiles>
     </Manifest>
+    <!-- Copy required runtime DLLs (vmm.dll, leechcore.dll, FTD3XX.dll etc.) from resources/ 
+         next to the built exe. This runs after successful link. Verbose output so you can see 
+         in the "输出" window whether it executed and where $(OutDir) points. -->
+    <PostBuildEvent>
+      <Command>echo [PostBuild] $(Configuration)|$(Platform)  OutDir=$(OutDir)
+echo [PostBuild] Copying DMA runtime files from "$(SolutionDir)resources\" ...
+copy /Y "$(SolutionDir)resources\leechcore.dll" "$(OutDir)" 
+copy /Y "$(SolutionDir)resources\vmm.dll" "$(OutDir)" 
+copy /Y "$(SolutionDir)resources\FTD3XX.dll" "$(OutDir)" 
+copy /Y "$(SolutionDir)resources\dbghelp.dll" "$(OutDir)" 
+copy /Y "$(SolutionDir)resources\symsrv.dll" "$(OutDir)" 
+copy /Y "$(SolutionDir)resources\info.db" "$(OutDir)" 
+copy /Y "$(SolutionDir)resources\vmmyara.dll" "$(OutDir)" 
+echo [PostBuild] Copying fonts folder...
+if not exist "$(OutDir)fonts" mkdir "$(OutDir)fonts"
+copy /Y "$(SolutionDir)fonts\*.ttf" "$(OutDir)fonts\" 
+echo [PostBuild] Copy done. Verifying presence:
+if exist "$(OutDir)leechcore.dll" (echo   + leechcore.dll OK) else (echo   ! leechcore.dll MISSING)
+if exist "$(OutDir)vmm.dll" (echo   + vmm.dll OK) else (echo   ! vmm.dll MISSING)
+if exist "$(OutDir)FTD3XX.dll" (echo   + FTD3XX.dll OK) else (echo   ! FTD3XX.dll MISSING)
+if exist "$(OutDir)fonts\NotoSans.ttf" (echo   + fonts\NotoSans.ttf OK) else (echo   ! fonts\NotoSans.ttf MISSING)
+echo [PostBuild] If files are missing: check that resources\ and fonts\ folders have them and that this project built successfully (no compile/link errors before post-build).
+</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -187,6 +205,30 @@
     <Manifest>
       <AdditionalManifestFiles>$(SolutionDir)app.manifest %(AdditionalManifestFiles)</AdditionalManifestFiles>
     </Manifest>
+    <!-- Copy required runtime DLLs (vmm.dll, leechcore.dll, FTD3XX.dll etc.) from resources/ 
+         next to the built exe. This runs after successful link. Verbose output so you can see 
+         in the "输出" window whether it executed and where $(OutDir) points. -->
+    <PostBuildEvent>
+      <Command>echo [PostBuild] $(Configuration)|$(Platform)  OutDir=$(OutDir)
+echo [PostBuild] Copying DMA runtime files from "$(SolutionDir)resources\" ...
+copy /Y "$(SolutionDir)resources\leechcore.dll" "$(OutDir)" 
+copy /Y "$(SolutionDir)resources\vmm.dll" "$(OutDir)" 
+copy /Y "$(SolutionDir)resources\FTD3XX.dll" "$(OutDir)" 
+copy /Y "$(SolutionDir)resources\dbghelp.dll" "$(OutDir)" 
+copy /Y "$(SolutionDir)resources\symsrv.dll" "$(OutDir)" 
+copy /Y "$(SolutionDir)resources\info.db" "$(OutDir)" 
+copy /Y "$(SolutionDir)resources\vmmyara.dll" "$(OutDir)" 
+echo [PostBuild] Copying fonts folder...
+if not exist "$(OutDir)fonts" mkdir "$(OutDir)fonts"
+copy /Y "$(SolutionDir)fonts\*.ttf" "$(OutDir)fonts\" 
+echo [PostBuild] Copy done. Verifying presence:
+if exist "$(OutDir)leechcore.dll" (echo   + leechcore.dll OK) else (echo   ! leechcore.dll MISSING)
+if exist "$(OutDir)vmm.dll" (echo   + vmm.dll OK) else (echo   ! vmm.dll MISSING)
+if exist "$(OutDir)FTD3XX.dll" (echo   + FTD3XX.dll OK) else (echo   ! FTD3XX.dll MISSING)
+if exist "$(OutDir)fonts\NotoSans.ttf" (echo   + fonts\NotoSans.ttf OK) else (echo   ! fonts\NotoSans.ttf MISSING)
+echo [PostBuild] If files are missing: check that resources\ and fonts\ folders have them and that this project built successfully (no compile/link errors before post-build).
+</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Aim\Aim.cpp" />
@@ -386,4 +428,31 @@
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
+  <!-- Declarative copy of runtime dependencies (DLLs + info.db for FixCr3).
+       These will be copied to $(OutDir) with "PreserveNewest" semantics by MSBuild itself.
+       This is more reliable than (or in addition to) PostBuildEvent. 
+       The files must exist in $(SolutionDir)resources\ at build time. -->
+  <ItemGroup>
+    <None Include="$(SolutionDir)resources\leechcore.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="$(SolutionDir)resources\vmm.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="$(SolutionDir)resources\FTD3XX.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="$(SolutionDir)resources\dbghelp.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="$(SolutionDir)resources\symsrv.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="$(SolutionDir)resources\info.db">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="$(SolutionDir)resources\vmmyara.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
 </Project>
