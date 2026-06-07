@@ -286,17 +286,6 @@ bool Window::CreateAndRunWindow(HINSTANCE hInstance, Warthunder* wt, UnitHandler
 
 		ImGui::Begin("Menu", nullptr);
 
-		// Prominent status for when running without real DMA hardware (for UI testing)
-		if (!Memory::DMA_INITIALIZED)
-		{
-			ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.3f, 0.3f, 1.0f));
-			ImGui::Text("!!! DMA NOT INITIALIZED !!!");
-			ImGui::PopStyleColor();
-			ImGui::Text("No hardware / target process not ready. Live ESP and memory features are disabled.");
-			ImGui::Text("This menu is running in UI-test mode. Connect DMA device and restart to enable full functionality.");
-			ImGui::Separator();
-		}
-
 		ImGui::BeginTabBar("MainTabs");
 		if (ImGui::BeginTabItem("ESP"))
 		{
@@ -429,9 +418,6 @@ bool Window::CreateAndRunWindow(HINSTANCE hInstance, Warthunder* wt, UnitHandler
 		if (ImGui::BeginTabItem("DEBUG")) {
 			/*ImGui::Text("LocalPlayer pos: X: %.2f, Y: %.2f, Z: %.2f", LocalPlayer::pos.x, LocalPlayer::pos.y, LocalPlayer::pos.z);*/
 			ImGui::Text("DMA Initialized: %s", Memory::DMA_INITIALIZED ? "YES" : "NO");
-			if (!Memory::DMA_INITIALIZED) {
-				ImGui::TextColored(ImVec4(1, 0.4f, 0.4f, 1), "Hardware not connected or target process not found.");
-			}
 			if (wt) {
 				ImGui::Text("Collection running: %s", wt->running ? "true" : "false");
 				ImGui::Text("Last unit count (producer): %zu", wt->last_unit_count.load());
@@ -453,8 +439,7 @@ bool Window::CreateAndRunWindow(HINSTANCE hInstance, Warthunder* wt, UnitHandler
 		ImDrawList* draw_list = ImGui::GetBackgroundDrawList();
 		//draw_list->AddRect(ImVec2(100, 100), ImVec2(200, 200), IM_COL32(255, 0, 0, 255), 2.0f, ImDrawFlags_None);
 
-		// Guard game-specific drawing: in limited mode (no DMA), c_game and local_unit are nullptr
-		if (Memory::DMA_INITIALIZED && wt && wt->c_game && wt->local_unit)
+		if (wt && wt->c_game && wt->local_unit)
 		{
 			if (!wt->c_game->camera.is_valid())
 			{
@@ -463,22 +448,8 @@ bool Window::CreateAndRunWindow(HINSTANCE hInstance, Warthunder* wt, UnitHandler
 			wt->c_game->camera.set_view_matrix();
 			Esp::DrawPlayerEsp(draw_list, wt->c_game->camera,unit_handler,*wt->local_unit);
 		}
-		else if (!Memory::DMA_INITIALIZED)
-		{
-			// Test drawing to prove the overlay + background draw list is working
-			// (visible even without game/DMA)
-			draw_list->AddText(ImGui::GetFont(), 28.0f, ImVec2(50, 50),
-				IM_COL32(255, 255, 0, 255), "LIMITED MODE - NO DMA - OVERLAY IS DRAWING");
 
-			// Dummy "ESP" test box
-			draw_list->AddRect(ImVec2(150, 150), ImVec2(450, 350), IM_COL32(0, 255, 0, 255), 0.0f, 0, 4.0f);
-			draw_list->AddText(ImGui::GetFont(), 20.0f, ImVec2(170, 200),
-				IM_COL32(0, 255, 0, 255), "Test ESP Box (no real data)");
-			draw_list->AddText(ImGui::GetFont(), 16.0f, ImVec2(170, 240),
-				IM_COL32(255, 255, 255, 255), "This proves background drawing works.");
-		}
-
-		// FPS is always safe to draw (on the overlay)
+		// FPS
 		char fps_buffer[32];
 		snprintf(fps_buffer, sizeof(fps_buffer), "FPS: %d", static_cast<int>(round(ImGui::GetIO().Framerate)));
 		draw_list->AddText(ImGui::GetFont(), 15.0f, ImVec2(0, 0), IM_COL32(255, 255, 255, 255), fps_buffer);

@@ -33,14 +33,12 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 
 	// memMap=true will try to use (or generate) a physical memory map for potentially faster/less-noisy DMA.
-	// For local testing without DMA hardware attached, or first bring-up, false is simpler and faster to fail.
+	// false is used to avoid the initial memory map dump on every start.
 	bool dmaReady = mem.Init("aces.exe", /*memMap=*/false);
 	if (!dmaReady)
 	{
 		printf("[WARNING] DMA initialization failed (no hardware / aces.exe not running / device busy).\n");
-		printf("         The overlay menu will still launch in limited mode for UI testing.\n");
-		printf("         Connect DMA hardware + ensure target game is running, then restart the program for live data.\n\n");
-		// Do NOT exit here - we want the GUI to be runnable for testing/config even without DMA.
+		printf("         Connect DMA hardware + ensure target game is running, then restart the program.\n\n");
 	}
 
 	//sdk init
