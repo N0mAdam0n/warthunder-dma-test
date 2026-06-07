@@ -99,6 +99,7 @@ public:
 
 					mem.ExecuteReadScatter(handle);
 					printf("[COLLECT] current gui_state=%d\n", (int)local_player->gui_state);
+					fflush(stdout);
 
 					// Unit collection now always attempted (removed gui_state gate for real DMA)
 					{
@@ -107,6 +108,7 @@ public:
 						const auto unit_count = c_game->get_unit_count3();
 						
 						printf("[COLLECT] unit_count=%zu\n", unit_count);
+						fflush(stdout);
 						
 						std::vector<CUnit> units = unit_list.unit_scatter(handle, unit_count);
 
@@ -147,6 +149,7 @@ public:
 						}
 
 						printf("[COLLECT] after first filter temp_units=%zu\n", temp_units.size());
+						fflush(stdout);
 
 						// Merged position/bounds scatter here (producer enriches before publish)
 						if (!temp_units.empty())
