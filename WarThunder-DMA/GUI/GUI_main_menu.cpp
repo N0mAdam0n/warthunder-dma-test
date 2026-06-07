@@ -463,6 +463,20 @@ bool Window::CreateAndRunWindow(HINSTANCE hInstance, Warthunder* wt, UnitHandler
 			wt->c_game->camera.set_view_matrix();
 			Esp::DrawPlayerEsp(draw_list, wt->c_game->camera,unit_handler,*wt->local_unit);
 		}
+		else if (!Memory::DMA_INITIALIZED)
+		{
+			// Test drawing to prove the overlay + background draw list is working
+			// (visible even without game/DMA)
+			draw_list->AddText(ImGui::GetFont(), 28.0f, ImVec2(50, 50),
+				IM_COL32(255, 255, 0, 255), "LIMITED MODE - NO DMA - OVERLAY IS DRAWING");
+
+			// Dummy "ESP" test box
+			draw_list->AddRect(ImVec2(150, 150), ImVec2(450, 350), IM_COL32(0, 255, 0, 255), 0.0f, 0, 4.0f);
+			draw_list->AddText(ImGui::GetFont(), 20.0f, ImVec2(170, 200),
+				IM_COL32(0, 255, 0, 255), "Test ESP Box (no real data)");
+			draw_list->AddText(ImGui::GetFont(), 16.0f, ImVec2(170, 240),
+				IM_COL32(255, 255, 255, 255), "This proves background drawing works.");
+		}
 
 		// FPS is always safe to draw (on the overlay)
 		char fps_buffer[32];
