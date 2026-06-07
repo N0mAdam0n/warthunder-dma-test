@@ -145,6 +145,7 @@
       <LanguageStandard_C>stdc17</LanguageStandard_C>
       <!-- Match static CRT often used by freetype.lib + DMA libs to reduce LIBCMT conflict -->
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <AdditionalOptions>/wd4001 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -152,7 +153,7 @@
       <AdditionalDependencies>d3d11.lib;freetype.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(SolutionDir)Lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <!-- Suppress "未找到 PDB freetype.pdb" spam from the prebuilt freetype.lib -->
-      <AdditionalOptions>/ignore:4099 %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/ignore:4099 /NODEFAULTLIB:LIBCMT %(AdditionalOptions)</AdditionalOptions>
     </Link>
     <Manifest>
       <AdditionalManifestFiles>$(SolutionDir)app.manifest %(AdditionalManifestFiles)</AdditionalManifestFiles>
@@ -161,7 +162,7 @@
          next to the built exe. This runs after successful link. Verbose output so you can see 
          in the "输出" window whether it executed and where $(OutDir) points. -->
     <PostBuildEvent>
-      <Command>cmd /c "echo [PostBuild] $(Configuration)|$(Platform)  OutDir=$(OutDir) &amp; echo [PostBuild] Copying DMA runtime files... &amp; copy /Y "$(SolutionDir)resources\leechcore.dll" "$(OutDir)" &gt;nul &amp; copy /Y "$(SolutionDir)resources\vmm.dll" "$(OutDir)" &gt;nul &amp; copy /Y "$(SolutionDir)resources\FTD3XX.dll" "$(OutDir)" &gt;nul &amp; copy /Y "$(SolutionDir)resources\dbghelp.dll" "$(OutDir)" &gt;nul &amp; copy /Y "$(SolutionDir)resources\symsrv.dll" "$(OutDir)" &gt;nul &amp; copy /Y "$(SolutionDir)resources\info.db" "$(OutDir)" &gt;nul &amp; copy /Y "$(SolutionDir)resources\vmmyara.dll" "$(OutDir)" &gt;nul &amp; echo [PostBuild] Copying fonts... &amp; if not exist "$(OutDir)fonts" mkdir "$(OutDir)fonts" &amp; copy /Y "$(SolutionDir)fonts\*.ttf" "$(OutDir)fonts\" &gt;nul &amp; echo [PostBuild] Done. &amp; if exist "$(OutDir)leechcore.dll" (echo   + leechcore.dll OK) else (echo   ! leechcore.dll MISSING) &amp; if exist "$(OutDir)vmm.dll" (echo   + vmm.dll OK) else (echo   ! vmm.dll MISSING) &amp; if exist "$(OutDir)fonts\NotoSans.ttf" (echo   + fonts\NotoSans.ttf OK) else (echo   ! fonts\NotoSans.ttf MISSING)"</Command>
+      <Command>cmd /c "echo [PostBuild] $(Configuration)|$(Platform) OutDir=$(OutDir) &amp;&amp; (xcopy /Y /Q /I "$(SolutionDir)resources\*.dll" "$(OutDir)" &gt;nul 2&gt;&amp;1 || echo [PostBuild] some DLLs skipped) &amp;&amp; (xcopy /Y /Q /I "$(SolutionDir)resources\info.db" "$(OutDir)" &gt;nul 2&gt;&amp;1 || echo ) &amp;&amp; if not exist "$(OutDir)fonts" mkdir "$(OutDir)fonts" 2&gt;nul &amp;&amp; (xcopy /Y /Q /I "$(SolutionDir)fonts\*.ttf" "$(OutDir)fonts" &gt;nul 2&gt;&amp;1 || echo [PostBuild] fonts skipped) &amp;&amp; echo [PostBuild] PostBuild finished successfully"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -179,6 +180,7 @@
       <LanguageStandard_C>stdc17</LanguageStandard_C>
       <!-- Match static CRT often used by freetype.lib + DMA libs -->
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <AdditionalOptions>/wd4001 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -187,6 +189,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>d3d11.lib;freetype.lib;dxgi.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(SolutionDir)Lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalOptions>/ignore:4099 /NODEFAULTLIB:LIBCMT %(AdditionalOptions)</AdditionalOptions>
     </Link>
     <Manifest>
       <AdditionalManifestFiles>$(SolutionDir)app.manifest %(AdditionalManifestFiles)</AdditionalManifestFiles>
@@ -195,7 +198,7 @@
          next to the built exe. This runs after successful link. Verbose output so you can see 
          in the "输出" window whether it executed and where $(OutDir) points. -->
     <PostBuildEvent>
-      <Command>cmd /c "echo [PostBuild] $(Configuration)|$(Platform)  OutDir=$(OutDir) &amp; echo [PostBuild] Copying DMA runtime files... &amp; copy /Y "$(SolutionDir)resources\leechcore.dll" "$(OutDir)" &gt;nul &amp; copy /Y "$(SolutionDir)resources\vmm.dll" "$(OutDir)" &gt;nul &amp; copy /Y "$(SolutionDir)resources\FTD3XX.dll" "$(OutDir)" &gt;nul &amp; copy /Y "$(SolutionDir)resources\dbghelp.dll" "$(OutDir)" &gt;nul &amp; copy /Y "$(SolutionDir)resources\symsrv.dll" "$(OutDir)" &gt;nul &amp; copy /Y "$(SolutionDir)resources\info.db" "$(OutDir)" &gt;nul &amp; copy /Y "$(SolutionDir)resources\vmmyara.dll" "$(OutDir)" &gt;nul &amp; echo [PostBuild] Copying fonts... &amp; if not exist "$(OutDir)fonts" mkdir "$(OutDir)fonts" &amp; copy /Y "$(SolutionDir)fonts\*.ttf" "$(OutDir)fonts\" &gt;nul &amp; echo [PostBuild] Done. &amp; if exist "$(OutDir)leechcore.dll" (echo   + leechcore.dll OK) else (echo   ! leechcore.dll MISSING) &amp; if exist "$(OutDir)vmm.dll" (echo   + vmm.dll OK) else (echo   ! vmm.dll MISSING) &amp; if exist "$(OutDir)fonts\NotoSans.ttf" (echo   + fonts\NotoSans.ttf OK) else (echo   ! fonts\NotoSans.ttf MISSING)"</Command>
+      <Command>cmd /c "echo [PostBuild] $(Configuration)|$(Platform) OutDir=$(OutDir) &amp;&amp; (xcopy /Y /Q /I "$(SolutionDir)resources\*.dll" "$(OutDir)" &gt;nul 2&gt;&amp;1 || echo [PostBuild] some DLLs skipped) &amp;&amp; (xcopy /Y /Q /I "$(SolutionDir)resources\info.db" "$(OutDir)" &gt;nul 2&gt;&amp;1 || echo ) &amp;&amp; if not exist "$(OutDir)fonts" mkdir "$(OutDir)fonts" 2&gt;nul &amp;&amp; (xcopy /Y /Q /I "$(SolutionDir)fonts\*.ttf" "$(OutDir)fonts" &gt;nul 2&gt;&amp;1 || echo [PostBuild] fonts skipped) &amp;&amp; echo [PostBuild] PostBuild finished successfully"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
