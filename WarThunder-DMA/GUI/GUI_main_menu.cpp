@@ -377,6 +377,14 @@ bool Window::CreateAndRunWindow(HINSTANCE hInstance, Warthunder* wt, UnitHandler
 		}
 		if (ImGui::BeginTabItem("DEBUG")) {
 			/*ImGui::Text("LocalPlayer pos: X: %.2f, Y: %.2f, Z: %.2f", LocalPlayer::pos.x, LocalPlayer::pos.y, LocalPlayer::pos.z);*/
+			if (wt) {
+				ImGui::Text("Collection running: %s", wt->running ? "true" : "false");
+				ImGui::Text("Last unit count (producer): %zu", wt->last_unit_count.load());
+			}
+			if (unit_handler) {
+				ImGui::Text("UnitHandler running: %s", unit_handler->running ? "true" : "false");
+				ImGui::Text("Complete units (consumer): %zu", unit_handler->complete_units.size());
+			}
 			ImGui::EndTabItem();
 		}
 		ImGui::EndTabBar();
@@ -411,6 +419,10 @@ bool Window::CreateAndRunWindow(HINSTANCE hInstance, Warthunder* wt, UnitHandler
 		g_pSwapChain->Present(1, 0);
 	}
 
+	// Explicit stop for background threads before destroying ImGui/D3D (Step 6)
+	// This ensures clean join (dtors also call Stop for safety)
+	if (unit_handler) unit_handler->Stop();
+	if (wt) wt->Stop();
 
 
 		ImGui_ImplDX11_Shutdown();

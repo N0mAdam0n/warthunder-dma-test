@@ -4,48 +4,34 @@
 
 UnitHandler::UnitHandler(Warthunder* wt)
 {
-
-
-	std::thread fast_loop([wt, this]() {
-		while (1) {
+	fast_thread = std::thread([wt, this]() {
+		while (running) {
 			if (ConfigInstance.Player_ESP.Enable)
 			{
-				/*wt.unit_list_mutex.lock();*/
-				if (wt->unit_list_ready)
-				{
-					temp_units = std::move(wt->unit_list);
-					wt->unit_list_ready = false;
-				}
-				/*wt.unit_list_mutex.unlock();*/
-				if (!temp_units.empty())
-				{
-					auto handle = mem.CreateScatterHandle();
-					for (auto& unit : temp_units)
-					{
-						unit.read_position_scatter_request(handle);
-						if (ConfigInstance.Player_ESP.Enable_simple_box)
-						{
-							unit.read_boundsmin_scatter_request(handle);
-							unit.read_boundsmax_scatter_request(handle);
-						}
-
-					}
-
-					mem.ExecuteReadScatter(handle);
-
-					mem.CloseScatterHandle(handle);
-
-
-				}
-
+				// Snapshot from producer already has positions (merged scatter in Warthunder).
+				auto snapshot = wt->GetLatestUnits();
 
 				complete_units_mutex.lock();
-				complete_units = temp_units;
+				complete_units = std::move(snapshot);
 				complete_units_mutex.unlock();
+
+				// Throttle to avoid spinning; producer rate is what matters.
+				std::this_thread::sleep_for(std::chrono::milliseconds(50));
+			}
+			else
+			{
+				// Sleep aggressively when ESP is off (eliminates the previous 100% CPU spin).
+				std::this_thread::sleep_for(std::chrono::milliseconds(200));
 			}
 		}
+	});
+}
 
-		});
-
-	fast_loop.detach();
+void UnitHandler::Stop()
+{
+	running = false;
+	if (fast_thread.joinable())
+	{
+		fast_thread.join();
+	}
 }

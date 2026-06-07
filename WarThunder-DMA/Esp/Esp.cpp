@@ -8,58 +8,16 @@
 
 
 
-//void Esp::draw_damage_model(ImDrawList* draw_list,
-//    DamageModelContainer& damage_model_container,
-//    CUnit& unit,
-//    const std::uintptr_t& damage_model_transform_ptr,
-//    const Matrix3x3& unit_rotation,
-//    const Vector3& unit_position,
-//    const ViewMatrix& view_matrix,
-//    const ImU32 color)
-//{
-//    static std::vector<ImVec2> vertices_2d;
-//    vertices_2d.clear();
-//
-//    const auto damage_model_transform = unit.dm_transform(damage_model_transform_ptr, damage_model_container.transform_index << 6);
-//
-//    for (const auto& vertex : damage_model_container.vertices) {
-//        const Vector3 damage_model_position = (vertex * damage_model_transform).ToVector3() * unit_rotation + unit_position;
-//
-//        Vector2 damage_model_position_2d = CCamera::world_to_screen(damage_model_position, view_matrix);
-//            vertices_2d.push_back(ImVec2{ damage_model_position_2d.x, damage_model_position_2d.y });
-//        
-//    }
-//
-//    if (vertices_2d.size() == damage_model_container.vertices.size()) {
-//        const auto& indices = damage_model_container.indices;
-//        const size_t num_indices = indices.size();
-//
-//        for (size_t i = 0; i < num_indices; i += 3) {
-//            const uint16_t index1 = indices[i];
-//            const uint16_t index2 = indices[i + 1];
-//            const uint16_t index3 = indices[i + 2];
-//
-//            if (index1 < vertices_2d.size() && index2 < vertices_2d.size() && index3 < vertices_2d.size()) {
-//                const ImVec2& pos1 = vertices_2d[index1];
-//                const ImVec2& pos2 = vertices_2d[index2];
-//                const ImVec2& pos3 = vertices_2d[index3];
-//
-//                draw_list->AddTriangleFilled(pos1, pos2, pos3, color);
-//            }
-//        }
-//    }
-//}
-
 void Esp::DrawPlayerEsp(ImDrawList* draw_list, CCamera camera, UnitHandler *unit_handler,CUnit local_unit)
 {
     ImFont* font = ImGui::GetFont();
     if (ConfigInstance.Player_ESP.Enable)
     {
         unit_handler->complete_units_mutex.lock();
-        std::vector<CUnit> temp_units = unit_handler->complete_units;
+        std::vector<CUnit> units = unit_handler->complete_units;
         unit_handler->complete_units_mutex.unlock();
 
-        for (auto& unit : temp_units)
+        for (auto& unit : units)
         {
             if (unit.position.IsZero())
             {
