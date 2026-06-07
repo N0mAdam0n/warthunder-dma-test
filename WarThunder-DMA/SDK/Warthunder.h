@@ -13,7 +13,7 @@
 #include "CHud/CHud.h"
 #include "CGame/CGame.h"
 #include "CUnitList/CUnitList.h"
-// Memory::DMA_INITIALIZED is available via pch.h (included by the .cpp that uses this header).
+#include "../Memory/Memory.h"  // for DMA_INITIALIZED in limited mode guards (self-contained header)
 #include "CPlayer/CPlayer.h"
 #include "CUnit/CUnit.h"
 #include "CUnitInfo/CUnitInfo.h"
