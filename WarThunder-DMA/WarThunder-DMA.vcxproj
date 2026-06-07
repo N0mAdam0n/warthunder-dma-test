@@ -146,6 +146,7 @@
       <!-- Match static CRT often used by freetype.lib + DMA libs to reduce LIBCMT conflict -->
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <AdditionalOptions>/wd4001 %(AdditionalOptions)</AdditionalOptions>
+      <DisableSpecificWarnings>4001;%(DisableSpecificWarnings)</DisableSpecificWarnings>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -181,6 +182,7 @@
       <!-- Match static CRT often used by freetype.lib + DMA libs -->
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <AdditionalOptions>/wd4001 %(AdditionalOptions)</AdditionalOptions>
+      <DisableSpecificWarnings>4001;%(DisableSpecificWarnings)</DisableSpecificWarnings>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
