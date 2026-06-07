@@ -13,7 +13,7 @@
 #include "CHud/CHud.h"
 #include "CGame/CGame.h"
 #include "CUnitList/CUnitList.h"
-#include "../Memory/Memory.h"  // for DMA status checks
+#include "../Memory/Memory.h"  // DMA status (for info only)
 #include "CPlayer/CPlayer.h"
 #include "CUnit/CUnit.h"
 #include "CUnitInfo/CUnitInfo.h"
@@ -98,10 +98,15 @@ public:
 					local_unit->read_team_num_scatter_request(handle);
 
 					mem.ExecuteReadScatter(handle);
-					if (local_player->gui_state == GuiState::ALIVE || local_player->gui_state == GuiState::SPEC || local_player->gui_state == GuiState::MENU) {
+					printf("[COLLECT] current gui_state=%d\n", (int)local_player->gui_state);
+
+					// Unit collection now always attempted (removed gui_state gate for real DMA)
+					{
 
 						auto unit_list = c_game->get_unit_list3();
 						const auto unit_count = c_game->get_unit_count3();
+						
+						printf("[COLLECT] unit_count=%zu\n", unit_count);
 						
 						std::vector<CUnit> units = unit_list.unit_scatter(handle, unit_count);
 
@@ -140,6 +145,8 @@ public:
 								temp_units.push_back(unit);
 							}
 						}
+
+						printf("[COLLECT] after first filter temp_units=%zu\n", temp_units.size());
 
 						// Merged position/bounds scatter here (producer enriches before publish)
 						if (!temp_units.empty())
