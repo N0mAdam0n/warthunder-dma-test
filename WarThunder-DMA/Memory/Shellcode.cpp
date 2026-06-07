@@ -27,7 +27,7 @@ uint64_t c_shellcode::find_codecave(size_t function_size, const std::string& pro
 	const PIMAGE_SECTION_HEADER pSections = static_cast<PIMAGE_SECTION_HEADER>(LocalAlloc(LMEM_ZEROINIT, cSections * sizeof(IMAGE_SECTION_HEADER)));
 	if (!pSections || !VMMDLL_ProcessGetSectionsU(mem.vHandle, pid, const_cast<LPSTR>(module.c_str()), pSections, cSections, &cSections) || !cSections)
 	{
-		LOG("[!] Could not retrieve sections #2 for '%s'\n", module);
+		LOG("[!] Could not retrieve sections #2 for '%s'\n", module.c_str());
 		return 0;
 	}
 

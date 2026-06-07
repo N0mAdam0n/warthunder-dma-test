@@ -105,8 +105,8 @@ bool Memory::SetFPGA()
 	}
 
 	LOG("[+] VMMDLL_ConfigGet");
-	LOG(" ID = %lli", qwID);
-	LOG(" VERSION = %lli.%lli\n", qwVersionMajor, qwVersionMinor);
+	LOG(" ID = %llu", (unsigned long long)qwID);
+	LOG(" VERSION = %llu.%llu\n", (unsigned long long)qwVersionMajor, (unsigned long long)qwVersionMinor);
 
 	if ((qwVersionMajor >= 4) && ((qwVersionMajor >= 5) || (qwVersionMinor >= 7)))
 	{
@@ -325,7 +325,7 @@ PEB Memory::GetProcessPeb()
 	auto info = GetProcessInformation();
 	if (info.win.vaPEB)
 	{
-		LOG("[+] Found process PEB ptr at 0x%p\n", info.win.vaPEB);
+		LOG("[+] Found process PEB ptr at 0x%llx\n", (unsigned long long)info.win.vaPEB);
 		return Read<PEB>(info.win.vaPEB);
 	}
 	LOG("[!] Failed to find the processes PEB\n");
@@ -343,7 +343,7 @@ size_t Memory::GetBaseDaddy(std::string module_name)
 		return 0;
 	}
 
-	LOG("[+] Found Base Address for %s at 0x%p\n", module_name.c_str(), module_info->vaBase);
+	LOG("[+] Found Base Address for %s at 0x%llx\n", module_name.c_str(), (unsigned long long)module_info->vaBase);
 	return module_info->vaBase;
 }
 
@@ -355,7 +355,7 @@ size_t Memory::GetBaseSize(std::string module_name)
 	auto bResult = VMMDLL_Map_GetModuleFromNameW(this->vHandle, current_process.PID, const_cast<LPWSTR>(str.c_str()), &module_info, VMMDLL_MODULE_FLAG_NORMAL);
 	if (bResult)
 	{
-		LOG("[+] Found Base Size for %s at 0x%p\n", module_name.c_str(), module_info->cbImageSize);
+		LOG("[+] Found Base Size for %s at 0x%llx\n", module_name.c_str(), (unsigned long long)module_info->cbImageSize);
 		return module_info->cbImageSize;
 	}
 	return 0;
@@ -566,7 +566,7 @@ bool Memory::DumpMemory(uintptr_t address, std::string path)
 	for (size_t i = 0; i < nt.FileHeader.NumberOfSections; i++, sections++)
 	{
 		//Rewrite the file offsets to the virtual addresses
-		LOG("[!] Rewriting file offsets at 0x%p size 0x%p\n", sections->VirtualAddress, sections->Misc.VirtualSize);
+		LOG("[!] Rewriting file offsets at 0x%llx size 0x%llx\n", (unsigned long long)sections->VirtualAddress, (unsigned long long)sections->Misc.VirtualSize);
 		sections->PointerToRawData = sections->VirtualAddress;
 		sections->SizeOfRawData = sections->Misc.VirtualSize;
 	}
@@ -705,7 +705,7 @@ bool Memory::Write(uintptr_t address, void* buffer, size_t size) const
 {
 	if (!VMMDLL_MemWrite(this->vHandle, current_process.PID, address, static_cast<PBYTE>(buffer), size))
 	{
-		LOG("[!] Failed to write Memory at 0x%p\n", address);
+		LOG("[!] Failed to write Memory at 0x%llx\n", (unsigned long long)address);
 		return false;
 	}
 	return true;
@@ -715,7 +715,7 @@ bool Memory::Write(uintptr_t address, void* buffer, size_t size, int pid) const
 {
 	if (!VMMDLL_MemWrite(this->vHandle, pid, address, static_cast<PBYTE>(buffer), size))
 	{
-		LOG("[!] Failed to write Memory at 0x%p\n", address);
+		LOG("[!] Failed to write Memory at 0x%llx\n", (unsigned long long)address);
 		return false;
 	}
 	return true;
@@ -726,7 +726,7 @@ bool Memory::Read(uintptr_t address, void* buffer, size_t size) const
 	DWORD read_size = 0;
 	if (!VMMDLL_MemReadEx(this->vHandle, current_process.PID, address, static_cast<PBYTE>(buffer), size, &read_size, VMMDLL_FLAG_NOCACHE))
 	{
-		LOG("[!] Failed to read Memory at 0x%p\n", address);
+		LOG("[!] Failed to read Memory at 0x%llx\n", (unsigned long long)address);
 		return false;
 	}
 
@@ -738,7 +738,7 @@ bool Memory::Read(uintptr_t address, void* buffer, size_t size, int pid) const
 	DWORD read_size = 0;
 	if (!VMMDLL_MemReadEx(this->vHandle, pid, address, static_cast<PBYTE>(buffer), size, &read_size, VMMDLL_FLAG_NOCACHE))
 	{
-		LOG("[!] Failed to read Memory at 0x%p\n", address);
+		LOG("[!] Failed to read Memory at 0x%llx\n", (unsigned long long)address);
 		return false;
 	}
 	return (read_size == size);
@@ -775,7 +775,7 @@ void Memory::AddScatterReadRequest(VMMDLL_SCATTER_HANDLE handle, uint64_t addres
 {
 	if (!VMMDLL_Scatter_PrepareEx(handle, address, size, static_cast<PBYTE>(buffer), NULL))
 	{
-		LOG("[!] Failed to prepare scatter read at 0x%p\n", address);
+		LOG("[!] Failed to prepare scatter read at 0x%llx\n", (unsigned long long)address);
 	}
 }
 
@@ -783,7 +783,7 @@ void Memory::AddScatterWriteRequest(VMMDLL_SCATTER_HANDLE handle, uint64_t addre
 {
 	if (!VMMDLL_Scatter_PrepareWrite(handle, address, static_cast<PBYTE>(buffer), size))
 	{
-		LOG("[!] Failed to prepare scatter write at 0x%p\n", address);
+		LOG("[!] Failed to prepare scatter write at 0x%llx\n", (unsigned long long)address);
 	}
 }
 

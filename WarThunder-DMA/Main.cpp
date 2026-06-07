@@ -103,8 +103,3 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	}
 	return 0;
 }
-void main()
-{
-	//not work in window mode
-
-}

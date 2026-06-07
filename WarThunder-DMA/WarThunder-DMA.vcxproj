@@ -143,13 +143,16 @@
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
+      <!-- Match static CRT often used by freetype.lib + DMA libs to reduce LIBCMT conflict -->
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>d3d11.lib;freetype.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <Profile>true</Profile>
       <AdditionalLibraryDirectories>$(SolutionDir)Lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <!-- Suppress "未找到 PDB freetype.pdb" spam from the prebuilt freetype.lib -->
+      <AdditionalOptions>/ignore:4099 %(AdditionalOptions)</AdditionalOptions>
     </Link>
     <Manifest>
       <AdditionalManifestFiles>$(SolutionDir)app.manifest %(AdditionalManifestFiles)</AdditionalManifestFiles>
@@ -158,25 +161,7 @@
          next to the built exe. This runs after successful link. Verbose output so you can see 
          in the "输出" window whether it executed and where $(OutDir) points. -->
     <PostBuildEvent>
-      <Command>echo [PostBuild] $(Configuration)|$(Platform)  OutDir=$(OutDir)
-echo [PostBuild] Copying DMA runtime files from "$(SolutionDir)resources\" ...
-copy /Y "$(SolutionDir)resources\leechcore.dll" "$(OutDir)" 
-copy /Y "$(SolutionDir)resources\vmm.dll" "$(OutDir)" 
-copy /Y "$(SolutionDir)resources\FTD3XX.dll" "$(OutDir)" 
-copy /Y "$(SolutionDir)resources\dbghelp.dll" "$(OutDir)" 
-copy /Y "$(SolutionDir)resources\symsrv.dll" "$(OutDir)" 
-copy /Y "$(SolutionDir)resources\info.db" "$(OutDir)" 
-copy /Y "$(SolutionDir)resources\vmmyara.dll" "$(OutDir)" 
-echo [PostBuild] Copying fonts folder...
-if not exist "$(OutDir)fonts" mkdir "$(OutDir)fonts"
-copy /Y "$(SolutionDir)fonts\*.ttf" "$(OutDir)fonts\" 
-echo [PostBuild] Copy done. Verifying presence:
-if exist "$(OutDir)leechcore.dll" (echo   + leechcore.dll OK) else (echo   ! leechcore.dll MISSING)
-if exist "$(OutDir)vmm.dll" (echo   + vmm.dll OK) else (echo   ! vmm.dll MISSING)
-if exist "$(OutDir)FTD3XX.dll" (echo   + FTD3XX.dll OK) else (echo   ! FTD3XX.dll MISSING)
-if exist "$(OutDir)fonts\NotoSans.ttf" (echo   + fonts\NotoSans.ttf OK) else (echo   ! fonts\NotoSans.ttf MISSING)
-echo [PostBuild] If files are missing: check that resources\ and fonts\ folders have them and that this project built successfully (no compile/link errors before post-build).
-</Command>
+      <Command>cmd /c "echo [PostBuild] $(Configuration)|$(Platform)  OutDir=$(OutDir) &amp; echo [PostBuild] Copying DMA runtime files... &amp; copy /Y "$(SolutionDir)resources\leechcore.dll" "$(OutDir)" &gt;nul &amp; copy /Y "$(SolutionDir)resources\vmm.dll" "$(OutDir)" &gt;nul &amp; copy /Y "$(SolutionDir)resources\FTD3XX.dll" "$(OutDir)" &gt;nul &amp; copy /Y "$(SolutionDir)resources\dbghelp.dll" "$(OutDir)" &gt;nul &amp; copy /Y "$(SolutionDir)resources\symsrv.dll" "$(OutDir)" &gt;nul &amp; copy /Y "$(SolutionDir)resources\info.db" "$(OutDir)" &gt;nul &amp; copy /Y "$(SolutionDir)resources\vmmyara.dll" "$(OutDir)" &gt;nul &amp; echo [PostBuild] Copying fonts... &amp; if not exist "$(OutDir)fonts" mkdir "$(OutDir)fonts" &amp; copy /Y "$(SolutionDir)fonts\*.ttf" "$(OutDir)fonts\" &gt;nul &amp; echo [PostBuild] Done. &amp; if exist "$(OutDir)leechcore.dll" (echo   + leechcore.dll OK) else (echo   ! leechcore.dll MISSING) &amp; if exist "$(OutDir)vmm.dll" (echo   + vmm.dll OK) else (echo   ! vmm.dll MISSING) &amp; if exist "$(OutDir)fonts\NotoSans.ttf" (echo   + fonts\NotoSans.ttf OK) else (echo   ! fonts\NotoSans.ttf MISSING)"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -192,6 +177,8 @@ echo [PostBuild] If files are missing: check that resources\ and fonts\ folders 
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
+      <!-- Match static CRT often used by freetype.lib + DMA libs -->
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -199,7 +186,6 @@ echo [PostBuild] If files are missing: check that resources\ and fonts\ folders 
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>d3d11.lib;freetype.lib;dxgi.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <Profile>false</Profile>
       <AdditionalLibraryDirectories>$(SolutionDir)Lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <Manifest>
@@ -209,25 +195,7 @@ echo [PostBuild] If files are missing: check that resources\ and fonts\ folders 
          next to the built exe. This runs after successful link. Verbose output so you can see 
          in the "输出" window whether it executed and where $(OutDir) points. -->
     <PostBuildEvent>
-      <Command>echo [PostBuild] $(Configuration)|$(Platform)  OutDir=$(OutDir)
-echo [PostBuild] Copying DMA runtime files from "$(SolutionDir)resources\" ...
-copy /Y "$(SolutionDir)resources\leechcore.dll" "$(OutDir)" 
-copy /Y "$(SolutionDir)resources\vmm.dll" "$(OutDir)" 
-copy /Y "$(SolutionDir)resources\FTD3XX.dll" "$(OutDir)" 
-copy /Y "$(SolutionDir)resources\dbghelp.dll" "$(OutDir)" 
-copy /Y "$(SolutionDir)resources\symsrv.dll" "$(OutDir)" 
-copy /Y "$(SolutionDir)resources\info.db" "$(OutDir)" 
-copy /Y "$(SolutionDir)resources\vmmyara.dll" "$(OutDir)" 
-echo [PostBuild] Copying fonts folder...
-if not exist "$(OutDir)fonts" mkdir "$(OutDir)fonts"
-copy /Y "$(SolutionDir)fonts\*.ttf" "$(OutDir)fonts\" 
-echo [PostBuild] Copy done. Verifying presence:
-if exist "$(OutDir)leechcore.dll" (echo   + leechcore.dll OK) else (echo   ! leechcore.dll MISSING)
-if exist "$(OutDir)vmm.dll" (echo   + vmm.dll OK) else (echo   ! vmm.dll MISSING)
-if exist "$(OutDir)FTD3XX.dll" (echo   + FTD3XX.dll OK) else (echo   ! FTD3XX.dll MISSING)
-if exist "$(OutDir)fonts\NotoSans.ttf" (echo   + fonts\NotoSans.ttf OK) else (echo   ! fonts\NotoSans.ttf MISSING)
-echo [PostBuild] If files are missing: check that resources\ and fonts\ folders have them and that this project built successfully (no compile/link errors before post-build).
-</Command>
+      <Command>cmd /c "echo [PostBuild] $(Configuration)|$(Platform)  OutDir=$(OutDir) &amp; echo [PostBuild] Copying DMA runtime files... &amp; copy /Y "$(SolutionDir)resources\leechcore.dll" "$(OutDir)" &gt;nul &amp; copy /Y "$(SolutionDir)resources\vmm.dll" "$(OutDir)" &gt;nul &amp; copy /Y "$(SolutionDir)resources\FTD3XX.dll" "$(OutDir)" &gt;nul &amp; copy /Y "$(SolutionDir)resources\dbghelp.dll" "$(OutDir)" &gt;nul &amp; copy /Y "$(SolutionDir)resources\symsrv.dll" "$(OutDir)" &gt;nul &amp; copy /Y "$(SolutionDir)resources\info.db" "$(OutDir)" &gt;nul &amp; copy /Y "$(SolutionDir)resources\vmmyara.dll" "$(OutDir)" &gt;nul &amp; echo [PostBuild] Copying fonts... &amp; if not exist "$(OutDir)fonts" mkdir "$(OutDir)fonts" &amp; copy /Y "$(SolutionDir)fonts\*.ttf" "$(OutDir)fonts\" &gt;nul &amp; echo [PostBuild] Done. &amp; if exist "$(OutDir)leechcore.dll" (echo   + leechcore.dll OK) else (echo   ! leechcore.dll MISSING) &amp; if exist "$(OutDir)vmm.dll" (echo   + vmm.dll OK) else (echo   ! vmm.dll MISSING) &amp; if exist "$(OutDir)fonts\NotoSans.ttf" (echo   + fonts\NotoSans.ttf OK) else (echo   ! fonts\NotoSans.ttf MISSING)"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
