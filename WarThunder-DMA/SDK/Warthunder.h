@@ -13,6 +13,7 @@
 #include "CHud/CHud.h"
 #include "CGame/CGame.h"
 #include "CUnitList/CUnitList.h"
+// Memory::DMA_INITIALIZED is available via pch.h (included by the .cpp that uses this header).
 #include "CPlayer/CPlayer.h"
 #include "CUnit/CUnit.h"
 #include "CUnitInfo/CUnitInfo.h"
@@ -34,6 +35,17 @@ class Warthunder
 public:
 	Warthunder()
 	{
+		if (!Memory::DMA_INITIALIZED) {
+			std::cout << "[Warthunder] DMA not ready — limited UI-test mode (no memory reads).\n";
+			// Start a dummy idle thread so GetLatestUnits() / consumers stay happy and running flag works.
+			collection_thread = std::thread([this]() {
+				while (running) {
+					std::this_thread::sleep_for(std::chrono::milliseconds(300));
+				}
+			});
+			return; // skip all memory-dependent init below
+		}
+
 		try {
 
 			globals();
@@ -88,6 +100,11 @@ public:
 			collection_thread = std::thread([this]() { // refactored threading (single producer with snapshot + cv)
 				c_game->set_instance();
 				while (running) {
+					if (!Memory::DMA_INITIALIZED) {
+						// No DMA hardware connected — idle cleanly so the GUI can still run for testing.
+						std::this_thread::sleep_for(std::chrono::milliseconds(300));
+						continue;
+					}
 
 					auto handle = mem.CreateScatterHandle();
 

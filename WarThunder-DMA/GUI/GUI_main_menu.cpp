@@ -286,6 +286,17 @@ bool Window::CreateAndRunWindow(HINSTANCE hInstance, Warthunder* wt, UnitHandler
 
 		ImGui::Begin("Menu", nullptr);
 
+		// Prominent status for when running without real DMA hardware (for UI testing)
+		if (!Memory::DMA_INITIALIZED)
+		{
+			ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.3f, 0.3f, 1.0f));
+			ImGui::Text("!!! DMA NOT INITIALIZED !!!");
+			ImGui::PopStyleColor();
+			ImGui::Text("No hardware / target process not ready. Live ESP and memory features are disabled.");
+			ImGui::Text("This menu is running in UI-test mode. Connect DMA device and restart to enable full functionality.");
+			ImGui::Separator();
+		}
+
 		ImGui::BeginTabBar("MainTabs");
 		if (ImGui::BeginTabItem("ESP"))
 		{
@@ -417,6 +428,10 @@ bool Window::CreateAndRunWindow(HINSTANCE hInstance, Warthunder* wt, UnitHandler
 		}
 		if (ImGui::BeginTabItem("DEBUG")) {
 			/*ImGui::Text("LocalPlayer pos: X: %.2f, Y: %.2f, Z: %.2f", LocalPlayer::pos.x, LocalPlayer::pos.y, LocalPlayer::pos.z);*/
+			ImGui::Text("DMA Initialized: %s", Memory::DMA_INITIALIZED ? "YES" : "NO");
+			if (!Memory::DMA_INITIALIZED) {
+				ImGui::TextColored(ImVec4(1, 0.4f, 0.4f, 1), "Hardware not connected or target process not found.");
+			}
 			if (wt) {
 				ImGui::Text("Collection running: %s", wt->running ? "true" : "false");
 				ImGui::Text("Last unit count (producer): %zu", wt->last_unit_count.load());
