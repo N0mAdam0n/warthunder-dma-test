@@ -27,8 +27,6 @@ private:
 
 	static inline CurrentProcessInformation current_process { };
 
-	static inline BOOLEAN DMA_INITIALIZED = FALSE;
-	static inline BOOLEAN PROCESS_INITIALIZED = FALSE;
 	/**
 	*Dumps the systems Current physical memory pages
 	*To a file so we can use it in our DMA (:
@@ -54,6 +52,9 @@ private:
 	this->key_ptr = std::make_shared<c_keys>(*this);*/
 
 public:
+	static inline BOOLEAN DMA_INITIALIZED = FALSE;
+	static inline BOOLEAN PROCESS_INITIALIZED = FALSE;
+
 	/**
 	 * brief Constructor takes a wide string of the process.
 	 * Expects that all the libraries are in the root dir

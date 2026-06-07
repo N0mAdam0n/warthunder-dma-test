@@ -4,7 +4,7 @@
 #include <Windows.h>
 #include "./SDK/Warthunder.h"
 #include "../handlers/unit_handler/unit_handler.h"
-static class Window
+class Window
 {
 public:
 

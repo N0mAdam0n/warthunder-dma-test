@@ -36,7 +36,10 @@ public:
 	Warthunder()
 	{
 		if (!Memory::DMA_INITIALIZED) {
-			std::cout << "[Warthunder] DMA not ready — limited UI-test mode (no memory reads).\n";
+			std::cout << "[Warthunder] DMA not ready - limited UI-test mode (no memory reads).\n";
+			c_game = nullptr;
+			local_player = nullptr;
+			local_unit = nullptr;
 			// Start a dummy idle thread so GetLatestUnits() / consumers stay happy and running flag works.
 			collection_thread = std::thread([this]() {
 				while (running) {
@@ -101,7 +104,7 @@ public:
 				c_game->set_instance();
 				while (running) {
 					if (!Memory::DMA_INITIALIZED) {
-						// No DMA hardware connected — idle cleanly so the GUI can still run for testing.
+						// No DMA hardware connected - idle cleanly so the GUI can still run for testing.
 						std::this_thread::sleep_for(std::chrono::milliseconds(300));
 						continue;
 					}

@@ -65,6 +65,9 @@
 #pragma warning(disable: 4305)   // truncation from 'double' to 'float'
 #pragma warning(disable: 4100)   // unreferenced formal parameter (common in headers)
 #pragma warning(disable: 4189)   // local variable is initialized but not referenced
+#pragma warning(disable: 4101)   // 'e' : unreferenced local variable (common in catch blocks)
+#pragma warning(disable: 4018)   // '<' : signed/unsigned mismatch
+#pragma warning(disable: 4477)   // 'printf' : format string '%p' requires 'void*', but got uintptr_t etc. (we cast where critical)
 
 #include <vmmdll.h>
 #define DEBUG_INFO
