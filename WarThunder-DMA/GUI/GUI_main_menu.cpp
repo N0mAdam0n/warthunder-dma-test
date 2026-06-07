@@ -452,14 +452,19 @@ bool Window::CreateAndRunWindow(HINSTANCE hInstance, Warthunder* wt, UnitHandler
 
 		ImDrawList* draw_list = ImGui::GetBackgroundDrawList();
 		//draw_list->AddRect(ImVec2(100, 100), ImVec2(200, 200), IM_COL32(255, 0, 0, 255), 2.0f, ImDrawFlags_None);
-		if (!wt->c_game->camera.is_valid())
+
+		// Guard game-specific drawing: in limited mode (no DMA), c_game and local_unit are nullptr
+		if (Memory::DMA_INITIALIZED && wt && wt->c_game && wt->local_unit)
 		{
-			 wt->c_game->set_local_camera();
+			if (!wt->c_game->camera.is_valid())
+			{
+				 wt->c_game->set_local_camera();
+			}
+			wt->c_game->camera.set_view_matrix();
+			Esp::DrawPlayerEsp(draw_list, wt->c_game->camera,unit_handler,*wt->local_unit);
 		}
-		wt->c_game->camera.set_view_matrix();
-		Esp::DrawPlayerEsp(draw_list, wt->c_game->camera,unit_handler,*wt->local_unit);
 
-
+		// FPS is always safe to draw (on the overlay)
 		char fps_buffer[32];
 		snprintf(fps_buffer, sizeof(fps_buffer), "FPS: %d", static_cast<int>(round(ImGui::GetIO().Framerate)));
 		draw_list->AddText(ImGui::GetFont(), 15.0f, ImVec2(0, 0), IM_COL32(255, 255, 255, 255), fps_buffer);
