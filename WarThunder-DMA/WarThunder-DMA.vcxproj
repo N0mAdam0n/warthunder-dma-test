@@ -159,11 +159,9 @@
     <Manifest>
       <AdditionalManifestFiles>$(SolutionDir)app.manifest %(AdditionalManifestFiles)</AdditionalManifestFiles>
     </Manifest>
-    <!-- Copy required runtime DLLs (vmm.dll, leechcore.dll, FTD3XX.dll etc.) from resources/ 
-         next to the built exe. This runs after successful link. Verbose output so you can see 
-         in the "输出" window whether it executed and where $(OutDir) points. -->
+    <!-- Simple PostBuild to copy fonts folder (DLLs are handled by declarative <None> copies below) -->
     <PostBuildEvent>
-      <Command>cmd /c "echo [PostBuild] $(Configuration)|$(Platform) OutDir=$(OutDir) &amp;&amp; (xcopy /Y /Q /I "$(SolutionDir)resources\*.dll" "$(OutDir)" &gt;nul 2&gt;&amp;1 || echo [PostBuild] some DLLs skipped) &amp;&amp; (xcopy /Y /Q /I "$(SolutionDir)resources\info.db" "$(OutDir)" &gt;nul 2&gt;&amp;1 || echo ) &amp;&amp; if not exist "$(OutDir)fonts" mkdir "$(OutDir)fonts" 2&gt;nul &amp;&amp; (xcopy /Y /Q /I "$(SolutionDir)fonts\*.ttf" "$(OutDir)fonts" &gt;nul 2&gt;&amp;1 || echo [PostBuild] fonts skipped) &amp;&amp; echo [PostBuild] PostBuild finished successfully"</Command>
+      <Command>echo [PostBuild] Copying fonts... &amp;&amp; if not exist "$(OutDir)fonts" mkdir "$(OutDir)fonts" &amp;&amp; xcopy /Y /Q "$(SolutionDir)fonts\*.ttf" "$(OutDir)fonts" &gt;nul 2&gt;&amp;1 &amp;&amp; echo [PostBuild] Fonts done. || echo [PostBuild] fonts copy skipped (non-fatal)</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -196,11 +194,9 @@
     <Manifest>
       <AdditionalManifestFiles>$(SolutionDir)app.manifest %(AdditionalManifestFiles)</AdditionalManifestFiles>
     </Manifest>
-    <!-- Copy required runtime DLLs (vmm.dll, leechcore.dll, FTD3XX.dll etc.) from resources/ 
-         next to the built exe. This runs after successful link. Verbose output so you can see 
-         in the "输出" window whether it executed and where $(OutDir) points. -->
+    <!-- Simple PostBuild to copy fonts folder (DLLs are handled by declarative <None> copies below) -->
     <PostBuildEvent>
-      <Command>cmd /c "echo [PostBuild] $(Configuration)|$(Platform) OutDir=$(OutDir) &amp;&amp; (xcopy /Y /Q /I "$(SolutionDir)resources\*.dll" "$(OutDir)" &gt;nul 2&gt;&amp;1 || echo [PostBuild] some DLLs skipped) &amp;&amp; (xcopy /Y /Q /I "$(SolutionDir)resources\info.db" "$(OutDir)" &gt;nul 2&gt;&amp;1 || echo ) &amp;&amp; if not exist "$(OutDir)fonts" mkdir "$(OutDir)fonts" 2&gt;nul &amp;&amp; (xcopy /Y /Q /I "$(SolutionDir)fonts\*.ttf" "$(OutDir)fonts" &gt;nul 2&gt;&amp;1 || echo [PostBuild] fonts skipped) &amp;&amp; echo [PostBuild] PostBuild finished successfully"</Command>
+      <Command>echo [PostBuild] Copying fonts... &amp;&amp; if not exist "$(OutDir)fonts" mkdir "$(OutDir)fonts" &amp;&amp; xcopy /Y /Q "$(SolutionDir)fonts\*.ttf" "$(OutDir)fonts" &gt;nul 2&gt;&amp;1 &amp;&amp; echo [PostBuild] Fonts done. || echo [PostBuild] fonts copy skipped (non-fatal)</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
