@@ -16,12 +16,14 @@ Memory::Memory()
 		LOG("vmm: %p\n", modules.VMM);
 		LOG("ftd: %p\n", modules.FTD3XX);
 		LOG("leech: %p\n", modules.LEECHCORE);
-		printf("[!] Could not load a library\n");
+		printf("[!] Could not load a library (make sure vmm.dll, leechcore.dll, FTD3XX.dll are next to the exe or in PATH)\n");
+	}
+	else
+	{
+		LOG("Successfully loaded libraries!\n");
 	}
 
 	this->key = std::make_shared<c_keys>();
-
-	LOG("Successfully loaded libraries!\n");
 }
 
 Memory::~Memory()
@@ -129,56 +131,68 @@ bool Memory::Init(std::string process_name, bool memMap, bool debug)
 {
 	if (!DMA_INITIALIZED)
 	{
-		LOG("inizializing...\n");
-	reinit:
-		LPCSTR args[] = {const_cast<LPCSTR>(""), const_cast<LPCSTR>("-device"), const_cast<LPCSTR>("fpga://algo=0"), const_cast<LPCSTR>(""), const_cast<LPCSTR>(""), const_cast<LPCSTR>(""), const_cast<LPCSTR>("")};
-		DWORD argc = 3;
-		if (debug)
+		LOG("initializing DMA...\n");
+
+		auto do_init = [&](bool with_memmap) -> bool {
+			LPCSTR args[16] = {};
+			DWORD argc = 0;
+			args[argc++] = "";
+			args[argc++] = "-device";
+			args[argc++] = "fpga://algo=0";
+			if (debug)
+			{
+				args[argc++] = "-v";
+				args[argc++] = "-printf";
+			}
+
+			std::string mmap_path;
+			if (with_memmap)
+			{
+				auto temp_path = std::filesystem::temp_directory_path();
+				mmap_path = temp_path.string() + "\\mmap.txt";
+				bool have_map = std::filesystem::exists(mmap_path);
+				if (!have_map)
+				{
+					LOG("dumping memory map to file (first run)...\n");
+					have_map = this->DumpMemoryMap(debug);
+				}
+				if (have_map)
+				{
+					LOG("Using memory map: %s\n", mmap_path.c_str());
+					args[argc++] = "-memmap";
+					args[argc++] = mmap_path.c_str();
+				}
+				else
+				{
+					LOG("[!] No usable memory map, proceeding without it.\n");
+				}
+			}
+
+			this->vHandle = VMMDLL_Initialize(argc, args);
+			return this->vHandle != nullptr;
+		};
+
+		bool ok = do_init(memMap);
+		if (!ok && memMap)
 		{
-			args[argc++] = const_cast<LPCSTR>("-v");
-			args[argc++] = const_cast<LPCSTR>("-printf");
+			LOG("[!] Init with -memmap failed, retrying without memory map...\n");
+			ok = do_init(false);
 		}
 
-		std::string path = "";
-		if (memMap)
+		if (!ok)
 		{
-			auto temp_path = std::filesystem::temp_directory_path();
-			path = (temp_path.string() + "\\mmap.txt");
-			bool dumped = false;
-			if (!std::filesystem::exists(path))
-				dumped = this->DumpMemoryMap(debug);
-			else
-				dumped = true;
-			LOG("dumping memory map to file...\n");
-			if (!dumped)
-			{
-				LOG("[!] ERROR: Could not dump memory map!\n");
-				LOG("Defaulting to no memory map!\n");
-			}
-			else
-			{
-				LOG("Dumped memory map!\n");
-
-				//Add the memory map to the arguments and increase arg count.
-				args[argc++] = const_cast<LPSTR>("-memmap");
-				args[argc++] = const_cast<LPSTR>(path.c_str());
-			}
-		}
-		this->vHandle = VMMDLL_Initialize(argc, args);
-		if (!this->vHandle)
-		{
-			if (memMap)
-			{
-				memMap = false;
-				LOG("[!] Initialization failed with Memory map? Try without MMap\n");
-				goto reinit;
-			}
 			LOG("[!] Initialization failed! Is the DMA in use or disconnected?\n");
+			LOG("    Troubleshooting:\n");
+			LOG("    - Is your DMA card (FPGA) physically connected to this PC and powered?\n");
+			LOG("    - Is the target PC on and running War Thunder (aces.exe)?\n");
+			LOG("    - Close any other programs using DMA / LeechCore / MemProcFS.\n");
+			LOG("    - Run this exe as Administrator.\n");
+			LOG("    - Delete the file %%TEMP%%\\mmap.txt and try again.\n");
+			LOG("    - Verify leechcore.dll, vmm.dll and FTD3XX.dll are the correct matching versions.\n");
 			return false;
 		}
 
 		ULONG64 FPGA_ID = 0, DEVICE_ID = 0;
-
 		VMMDLL_ConfigGet(this->vHandle, LC_OPT_FPGA_FPGA_ID, &FPGA_ID);
 		VMMDLL_ConfigGet(this->vHandle, LC_OPT_FPGA_DEVICE_ID, &DEVICE_ID);
 

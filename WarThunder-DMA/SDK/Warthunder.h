@@ -1,5 +1,14 @@
 #pragma once
 #include <thread>
+#include <atomic>
+#include <chrono>
+
+// Threading refactor applied:
+// - Single producer thread with mutex+cv snapshot (latest_units)
+// - Position/bounds scatter merged into producer
+// - Consumer (UnitHandler) is now lightweight + sleeps when disabled
+// - Proper Stop()/join for clean shutdown
+// See plan.md section 10 for details.
 
 #include "CHud/CHud.h"
 #include "CGame/CGame.h"
@@ -76,22 +85,17 @@ public:
 			
 
 
-			std::thread loopne([&]() { // kill me please cringe coding
+			collection_thread = std::thread([this]() { // refactored threading (single producer with snapshot + cv)
 				c_game->set_instance();
-				while (1) {
+				while (running) {
 
 					auto handle = mem.CreateScatterHandle();
 
-					/*c_hud->get_instance();*/
 					*local_player = CPlayer::get_local();
 					local_player->read_gui_state();
 					*local_unit = local_player->unit();
 					local_unit->read_position_scatter_request(handle);
 					local_unit->read_team_num_scatter_request(handle);
-					/**local_unit_info = local_unit->unit_info();*/
-					/**prediction_engine = c_game->prediciton_engine();*/
-
-
 
 					mem.ExecuteReadScatter(handle);
 					if (local_player->gui_state == GuiState::ALIVE || local_player->gui_state == GuiState::SPEC || local_player->gui_state == GuiState::MENU) {
@@ -104,8 +108,6 @@ public:
 						if (unit_list.is_valid()) {
 
 							for (CUnit unit : units) {
-		
-
 								unit.read_unit_state_scatter_request(handle);
 								unit.read_player();
 								unit.player.read_gui_state();
@@ -119,7 +121,7 @@ public:
 
 								mem.ExecuteReadScatter(handle);
 
-								if (!unit.is_valid()|| !unit.is_alive() || unit.team_num == local_unit->team_num)
+								if (!unit.is_valid() || !unit.is_alive() || unit.team_num == local_unit->team_num)
 									continue;
 								unit.read_unit_info();
 								unit.unit_info.set_vehicle_info();
@@ -138,20 +140,41 @@ public:
 								temp_units.push_back(unit);
 							}
 						}
+
+						// Merged position/bounds scatter here (producer enriches before publish)
+						if (!temp_units.empty())
+						{
+							auto pos_handle = mem.CreateScatterHandle();
+							for (auto& unit : temp_units)
+							{
+								unit.read_position_scatter_request(pos_handle);
+								if (ConfigInstance.Player_ESP.Enable_simple_box)
+								{
+									unit.read_boundsmin_scatter_request(pos_handle);
+									unit.read_boundsmax_scatter_request(pos_handle);
+								}
+							}
+							mem.ExecuteReadScatter(pos_handle);
+							mem.CloseScatterHandle(pos_handle);
+						}
 					}
 
-					/*unit_list_mutex.lock();*/
-					
-					unit_list = temp_units;
-					unit_list_ready = true;
-					/*unit_list_mutex.unlock();*/
+					// Publish snapshot (protected by mutex + cv)
+					{
+						std::lock_guard<std::mutex> lk(units_mutex);
+						latest_units = std::move(temp_units);
+						last_unit_count = latest_units.size();
+						last_update_time = std::chrono::steady_clock::now();
+					}
+					units_cv.notify_one();
+
 					temp_units.clear();
 
-					std::this_thread::sleep_for(std::chrono::milliseconds(350));
+					std::this_thread::sleep_for(collection_interval);
 				}
 			});
 
-			loopne.detach();
+			// Thread is now a proper member with clean shutdown via Stop()/join.
 
 
 
@@ -169,6 +192,7 @@ public:
 	}
 	~Warthunder()
 	{
+		Stop();  // ensure collection thread is joined (Step 2+)
 		delete c_hud;
 		delete c_game;
 		delete local_player;
@@ -188,12 +212,49 @@ public:
 	CUnitInfo* local_unit_info;
 
 	CPredictionEngine* prediction_engine;
-	
-	//std::mutex unit_list_mutex; // bebebe
-	bool unit_list_ready = false;
-	std::vector<CUnit> unit_list;
-	
+
+	// Threading / lifetime control + clean snapshot (refactored)
+	std::atomic<bool> running{true};
+	std::thread collection_thread;
+
+	void Stop();
+
+	// Proper snapshot handoff (the only public way for consumers now)
+	std::mutex units_mutex;
+	std::condition_variable units_cv;
+	std::vector<CUnit> latest_units;  // protected snapshot for consumers
+
+	std::vector<CUnit> GetLatestUnits();
+
+	// For DEBUG / verification
+	std::atomic<size_t> last_unit_count{0};
+	std::atomic<std::chrono::steady_clock::time_point> last_update_time;
+
+	// Tunable collection interval (ms). Can be driven from Config later.
+	std::chrono::milliseconds collection_interval{180};
+
+	// Helper to update interval at runtime (e.g. from config)
+	void SetCollectionInterval(int ms) {
+		if (ms > 0) collection_interval = std::chrono::milliseconds(ms);
+	}
+
 private:
 	std::vector<CUnit> temp_units;
 }; inline Warthunder* warthunder;
+
+inline void Warthunder::Stop()
+{
+	running = false;
+	units_cv.notify_one();  // wake consumer if waiting
+	if (collection_thread.joinable())
+	{
+		collection_thread.join();
+	}
+}
+
+inline std::vector<CUnit> Warthunder::GetLatestUnits()
+{
+	std::lock_guard<std::mutex> lk(units_mutex);
+	return latest_units;  // copy for first version (safe, simple)
+}
 

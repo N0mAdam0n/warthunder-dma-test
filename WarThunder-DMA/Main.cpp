@@ -32,7 +32,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 
 
-	if (!mem.Init("aces.exe"))
+	// memMap=true will try to use (or generate) a physical memory map for potentially faster/less-noisy DMA.
+	// For local testing without DMA hardware attached, or first bring-up, false is simpler and faster to fail.
+	if (!mem.Init("aces.exe", /*memMap=*/false))
 	{
 		printf("Failed to initialize process\n");
 		system("pause");

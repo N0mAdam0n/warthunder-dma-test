@@ -83,10 +83,11 @@ public:
 	* brief Initializes the DMA
 	* This is required before any DMA operations can be done.
 	* @param process_name the name of the process
-	* @param memMap if true, will dump the memory map to a file	& make the DMA use it.
+	* @param memMap if true, will try to use/generate a physical memory map (mmap.txt in %TEMP%) for the DMA.
+	*               The first time this can be slow; subsequent runs reuse the cached map.
 	* @return true if successful, false if not.
 	*/
-	bool Init(std::string process_name, bool memMap = true, bool debug = false);
+	bool Init(std::string process_name, bool memMap = false, bool debug = false);
 
 	/*This part here is things related to the process information such as Base daddy, Size ect.*/
 
