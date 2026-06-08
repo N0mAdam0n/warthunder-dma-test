@@ -5,33 +5,30 @@
 UnitHandler::UnitHandler(Warthunder* wt)
 {
 	fast_thread = std::thread([wt, this]() {
-		while (running) {
+		RunLogger::Info("UnitHandler 消费线程已进入主循环");
+		while (running)
+		{
 			if (ConfigInstance.Player_ESP.Enable)
 			{
-				// Snapshot from producer already has positions (merged scatter in Warthunder).
 				auto snapshot = wt->GetLatestUnits();
-
-				complete_units_mutex.lock();
+				std::lock_guard<std::mutex> lock(complete_units_mutex);
 				complete_units = std::move(snapshot);
-				complete_units_mutex.unlock();
-
-				// Throttle to avoid spinning; producer rate is what matters.
 				std::this_thread::sleep_for(std::chrono::milliseconds(50));
 			}
 			else
 			{
-				// Sleep aggressively when ESP is off (eliminates the previous 100% CPU spin).
 				std::this_thread::sleep_for(std::chrono::milliseconds(200));
 			}
 		}
+		RunLogger::Info("UnitHandler 消费线程已退出");
 	});
 }
 
 void UnitHandler::Stop()
 {
+	RunLogger::Info("正在停止 UnitHandler...");
 	running = false;
 	if (fast_thread.joinable())
-	{
 		fast_thread.join();
-	}
+	RunLogger::Info("UnitHandler 已停止");
 }

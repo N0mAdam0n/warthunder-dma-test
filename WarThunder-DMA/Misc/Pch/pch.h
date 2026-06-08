@@ -57,14 +57,27 @@
 #ifdef min
 #undef min
 #endif
+
+// Silence noisy warnings from 3rd-party headers (freetype, vmmdll, nlohmann/json, stb, leechcore etc.)
+#pragma warning(disable: 4200)   // nonstandard extension: zero-sized array in struct/union
+#pragma warning(disable: 4244)   // conversion from 'size_t' to 'DWORD', possible loss of data (and similar truncations)
+#pragma warning(disable: 4267)   // same as above for 64->32
+#pragma warning(disable: 4305)   // truncation from 'double' to 'float'
+#pragma warning(disable: 4100)   // unreferenced formal parameter (common in headers)
+#pragma warning(disable: 4189)   // local variable is initialized but not referenced
+#pragma warning(disable: 4101)   // 'e' : unreferenced local variable (common in catch blocks)
+#pragma warning(disable: 4018)   // '<' : signed/unsigned mismatch
+#pragma warning(disable: 4477)   // 'printf' : format string '%p' requires 'void*', but got uintptr_t etc. (we cast where critical)
+
 #include <vmmdll.h>
+#include "RunLogger.h"
 #define DEBUG_INFO
 #ifdef DEBUG_INFO
-#define LOG(fmt, ...) std::printf(fmt, ##__VA_ARGS__)
+#define LOG(fmt, ...) RunLogger::LogPrintf(fmt, ##__VA_ARGS__)
 #define LOGW(fmt, ...) std::wprintf(fmt, ##__VA_ARGS__)
 #else
-#define LOG
-#define LOGW
+#define LOG(...)
+#define LOGW(...)
 #endif
 #pragma comment(lib, "ws2_32.lib")
 #pragma comment(lib, "vmm.lib")
@@ -78,4 +91,3 @@
 
 #include "Vector.h"
 #include "Memory.h"
-//#include "CheatFunction.h"

@@ -95,12 +95,6 @@
     <IncludePath>$(SolutionDir)Include</IncludePath>
     <LibraryPath>$(SolutionDir)Lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
-  <!-- Auto-copy runtime DLLs and support files (leechcore, vmm, FTD3XX, symsrv etc.) from resources/
-       to the output directory on every build. This prevents "missing leechcore.dll / vmm.dll" after
-       clean/rebuild or when switching Debug/Release. -->
-  <PropertyGroup>
-    <PostBuildEvent>cmd /c "xcopy /Y /D /Q "$(SolutionDir)resources\leechcore.dll" "$(OutDir)" &gt;nul 2&gt;&amp;1 &amp; xcopy /Y /D /Q "$(SolutionDir)resources\vmm.dll" "$(OutDir)" &gt;nul 2&gt;&amp;1 &amp; xcopy /Y /D /Q "$(SolutionDir)resources\FTD3XX.dll" "$(OutDir)" &gt;nul 2&gt;&amp;1 &amp; xcopy /Y /D /Q "$(SolutionDir)resources\dbghelp.dll" "$(OutDir)" &gt;nul 2&gt;&amp;1 &amp; xcopy /Y /D /Q "$(SolutionDir)resources\symsrv.dll" "$(OutDir)" &gt;nul 2&gt;&amp;1 &amp; xcopy /Y /D /Q "$(SolutionDir)resources\info.db" "$(OutDir)" &gt;nul 2&gt;&amp;1 &amp; xcopy /Y /D /Q "$(SolutionDir)resources\vmmyara.dll" "$(OutDir)" &gt;nul 2&gt;&amp;1 &amp; echo [PostBuild] DMA runtime DLLs + info.db copied to $(OutDir)"</PostBuildEvent>
-  </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
@@ -144,22 +138,31 @@
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>$(SolutionDir)$(ProjectName)\Config;$(SolutionDir)$(ProjectName)\SDK;$(SolutionDir)$(ProjectName)\Misc\Pch;$(SolutionDir)$(ProjectName)\Memory\nt;$(SolutionDir)$(ProjectName)\Memory;$(SolutionDir)$(ProjectName)\;$(SolutionDir)$(ProjectName)\Misc;$(SolutionDir)$(ProjectName)\GUI\imgui\freetype;$(SolutionDir)$(ProjectName)\GUI\imgui;$(SolutionDir)$(ProjectName)\GUI;$(SolutionDir)$(ProjectName)\Misc\NetConfig;$(SolutionDir)$(ProjectName)\Esp;$(SolutionDir)$(ProjectName)\Aim;$(SolutionDir)$(ProjectName)\Include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)$(ProjectName)\Config;$(SolutionDir)$(ProjectName)\SDK;$(SolutionDir)$(ProjectName)\Misc\Pch;$(SolutionDir)$(ProjectName)\Memory\nt;$(SolutionDir)$(ProjectName)\Memory;$(SolutionDir)$(ProjectName)\;$(SolutionDir)$(ProjectName)\Misc;$(SolutionDir)$(ProjectName)\GUI\imgui\freetype;$(SolutionDir)$(ProjectName)\GUI\imgui;$(SolutionDir)$(ProjectName)\GUI;$(SolutionDir)$(ProjectName)\Esp;$(SolutionDir)$(ProjectName)\Include</AdditionalIncludeDirectories>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
+      <!-- Match static CRT often used by freetype.lib + DMA libs to reduce LIBCMT conflict -->
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <AdditionalOptions>/wd4001 %(AdditionalOptions)</AdditionalOptions>
+      <DisableSpecificWarnings>4001;%(DisableSpecificWarnings)</DisableSpecificWarnings>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>d3d11.lib;freetype.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <Profile>true</Profile>
       <AdditionalLibraryDirectories>$(SolutionDir)Lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <!-- Suppress "未找到 PDB freetype.pdb" spam from the prebuilt freetype.lib -->
+      <AdditionalOptions>/ignore:4099 /NODEFAULTLIB:LIBCMT %(AdditionalOptions)</AdditionalOptions>
     </Link>
     <Manifest>
       <AdditionalManifestFiles>$(SolutionDir)app.manifest %(AdditionalManifestFiles)</AdditionalManifestFiles>
     </Manifest>
+    <!-- Simple PostBuild to copy fonts folder (DLLs are handled by declarative <None> copies below) -->
+    <PostBuildEvent>
+      <Command>echo [PostBuild] Copying fonts... &amp;&amp; if not exist "$(OutDir)fonts" mkdir "$(OutDir)fonts" &amp;&amp; xcopy /Y /Q "$(SolutionDir)fonts\*.ttf" "$(OutDir)fonts" &gt;nul 2&gt;&amp;1 &amp;&amp; echo [PostBuild] Fonts done. || echo [PostBuild] fonts copy skipped (non-fatal)</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -170,10 +173,14 @@
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;WIN32;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>$(SolutionDir)$(ProjectName)\Config;$(SolutionDir)$(ProjectName)\SDK;$(SolutionDir)$(ProjectName)\Misc\Pch;$(SolutionDir)$(ProjectName)\Memory\nt;$(SolutionDir)$(ProjectName)\Memory;$(SolutionDir)$(ProjectName)\;$(SolutionDir)$(ProjectName)\Misc;$(SolutionDir)$(ProjectName)\GUI\imgui\freetype;$(SolutionDir)$(ProjectName)\GUI\imgui;$(SolutionDir)$(ProjectName)\GUI;$(SolutionDir)$(ProjectName)\Misc\NetConfig;$(SolutionDir)$(ProjectName)\Esp;$(SolutionDir)$(ProjectName)\Aim;$(SolutionDir)$(ProjectName)\Include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)$(ProjectName)\Config;$(SolutionDir)$(ProjectName)\SDK;$(SolutionDir)$(ProjectName)\Misc\Pch;$(SolutionDir)$(ProjectName)\Memory\nt;$(SolutionDir)$(ProjectName)\Memory;$(SolutionDir)$(ProjectName)\;$(SolutionDir)$(ProjectName)\Misc;$(SolutionDir)$(ProjectName)\GUI\imgui\freetype;$(SolutionDir)$(ProjectName)\GUI\imgui;$(SolutionDir)$(ProjectName)\GUI;$(SolutionDir)$(ProjectName)\Esp;$(SolutionDir)$(ProjectName)\Include</AdditionalIncludeDirectories>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
+      <!-- Match static CRT often used by freetype.lib + DMA libs -->
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <AdditionalOptions>/wd4001 %(AdditionalOptions)</AdditionalOptions>
+      <DisableSpecificWarnings>4001;%(DisableSpecificWarnings)</DisableSpecificWarnings>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -181,15 +188,18 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>d3d11.lib;freetype.lib;dxgi.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <Profile>false</Profile>
       <AdditionalLibraryDirectories>$(SolutionDir)Lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalOptions>/ignore:4099 /NODEFAULTLIB:LIBCMT %(AdditionalOptions)</AdditionalOptions>
     </Link>
     <Manifest>
       <AdditionalManifestFiles>$(SolutionDir)app.manifest %(AdditionalManifestFiles)</AdditionalManifestFiles>
     </Manifest>
+    <!-- Simple PostBuild to copy fonts folder (DLLs are handled by declarative <None> copies below) -->
+    <PostBuildEvent>
+      <Command>echo [PostBuild] Copying fonts... &amp;&amp; if not exist "$(OutDir)fonts" mkdir "$(OutDir)fonts" &amp;&amp; xcopy /Y /Q "$(SolutionDir)fonts\*.ttf" "$(OutDir)fonts" &gt;nul 2&gt;&amp;1 &amp;&amp; echo [PostBuild] Fonts done. || echo [PostBuild] fonts copy skipped (non-fatal)</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Aim\Aim.cpp" />
     <ClCompile Include="Esp\Esp.cpp" />
     <ClCompile Include="GUI\GUI_main_menu.cpp">
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">pch.h</PrecompiledHeaderFile>
@@ -207,12 +217,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="GUI\imgui\imgui_demo.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
-    </ClCompile>
+
     <ClCompile Include="GUI\imgui\imgui_draw.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
@@ -256,15 +261,7 @@
     <ClCompile Include="Memory\InputManager.cpp" />
     <ClCompile Include="Memory\Memory.cpp" />
     <ClCompile Include="Memory\Registry.cpp" />
-    <ClCompile Include="Memory\Shellcode.cpp" />
-    <ClCompile Include="Misc\NetConfig\kmboxNet.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
-    </ClCompile>
-    <ClCompile Include="Misc\NetConfig\my_enc.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
-    </ClCompile>
+    <ClCompile Include="Misc\RunLogger.cpp" />
     <ClCompile Include="Misc\Pch\Pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
@@ -272,20 +269,14 @@
     <ClCompile Include="Misc\Vector.cpp" />
     <ClCompile Include="SDK\CCamera\CCamera.cpp" />
     <ClCompile Include="SDK\CGame\CGame.cpp" />
-    <ClCompile Include="SDK\CHud\CHud.cpp" />
     <ClCompile Include="SDK\CPlayer\CPlayer.cpp" />
-    <ClCompile Include="SDK\CPredictionEngine\CPredictionEngine.cpp" />
-    <ClCompile Include="SDK\CUnitInfo\CUnitInfo.cpp" />
     <ClCompile Include="SDK\CUnitList\CUnitList.cpp" />
-    <ClCompile Include="SDK\CUnit\CUnit.cpp" />
-    <ClCompile Include="SDK\CVehicleInfo\CVehicleInfo.cpp" />
     <ClCompile Include="SDK\globals\globals.cpp" />
+    <ClCompile Include="SDK\offset_scanner.cpp" />
     <ClCompile Include="SDK\offsets.cpp" />
-    <ClCompile Include="SDK\Structs\Structs.cpp" />
     <ClCompile Include="SDK\Warthunder.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Aim\Aim.h" />
     <ClInclude Include="Config\ConfigInstance.h" />
     <ClInclude Include="Config\lib\json.hpp" />
     <ClInclude Include="Config\Player_ESP_config.h" />
@@ -358,27 +349,23 @@
     <ClInclude Include="GUI\imgui\imstb_textedit.h" />
     <ClInclude Include="GUI\imgui\imstb_truetype.h" />
     <ClInclude Include="handlers\unit_handler\unit_handler.h" />
-    <ClInclude Include="Memory\DMAHandler.h" />
     <ClInclude Include="Memory\InputManager.h" />
     <ClInclude Include="Memory\Memory.h" />
     <ClInclude Include="Memory\nt\structs.h" />
     <ClInclude Include="Memory\Registry.h" />
-    <ClInclude Include="Memory\Shellcode.h" />
-    <ClInclude Include="Misc\NetConfig\HidTable.h" />
-    <ClInclude Include="Misc\NetConfig\kmboxNet.h" />
-    <ClInclude Include="Misc\NetConfig\my_enc.h" />
+    <ClInclude Include="Misc\RunLogger.h" />
     <ClInclude Include="Misc\Pch\pch.h" />
     <ClInclude Include="Misc\Vector.h" />
     <ClInclude Include="SDK\CCamera\CCamera.h" />
     <ClInclude Include="SDK\CGame\CGame.h" />
-    <ClInclude Include="SDK\CHud\CHud.h" />
     <ClInclude Include="SDK\CPlayer\CPlayer.h" />
-    <ClInclude Include="SDK\CPredictionEngine\CPredictionEngine.h" />
     <ClInclude Include="SDK\CUnitInfo\CUnitInfo.h" />
     <ClInclude Include="SDK\CUnitList\CUnitList.h" />
     <ClInclude Include="SDK\CUnit\CUnit.h" />
     <ClInclude Include="SDK\CVehicleInfo\CVehicleInfo.h" />
     <ClInclude Include="SDK\globals\globals.h" />
+    <ClInclude Include="SDK\offset_scanner.h" />
+    <ClInclude Include="SDK\Offset_manual_update.h" />
     <ClInclude Include="SDK\offsets.h" />
     <ClInclude Include="SDK\Structs\Structs.h" />
     <ClInclude Include="SDK\Warthunder.h" />
@@ -386,4 +373,31 @@
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
+  <!-- Declarative copy of runtime dependencies (DLLs + info.db for FixCr3).
+       These will be copied to $(OutDir) with "PreserveNewest" semantics by MSBuild itself.
+       This is more reliable than (or in addition to) PostBuildEvent. 
+       The files must exist in $(SolutionDir)resources\ at build time. -->
+  <ItemGroup>
+    <None Include="$(SolutionDir)resources\leechcore.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="$(SolutionDir)resources\vmm.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="$(SolutionDir)resources\FTD3XX.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="$(SolutionDir)resources\dbghelp.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="$(SolutionDir)resources\symsrv.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="$(SolutionDir)resources\info.db">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="$(SolutionDir)resources\vmmyara.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
 </Project>

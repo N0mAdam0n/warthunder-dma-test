@@ -2,7 +2,6 @@
 #include "pch.h"
 #include "InputManager.h"
 #include "Registry.h"
-#include "Shellcode.h"
 #include "structs.h"
 
 class Memory
@@ -27,8 +26,6 @@ private:
 
 	static inline CurrentProcessInformation current_process { };
 
-	static inline BOOLEAN DMA_INITIALIZED = FALSE;
-	static inline BOOLEAN PROCESS_INITIALIZED = FALSE;
 	/**
 	*Dumps the systems Current physical memory pages
 	*To a file so we can use it in our DMA (:
@@ -48,12 +45,16 @@ private:
 	//shared pointer
 	std::shared_ptr<c_keys> key;
 	c_registry registry;
-	c_shellcode shellcode;
-
-	/*this->registry_ptr = std::make_shared<c_registry>(*this);
-	this->key_ptr = std::make_shared<c_keys>(*this);*/
 
 public:
+	static bool LibrariesLoaded()
+	{
+		return modules.VMM && modules.FTD3XX && modules.LEECHCORE;
+	}
+
+	static inline BOOLEAN DMA_INITIALIZED = FALSE;
+	static inline BOOLEAN PROCESS_INITIALIZED = FALSE;
+
 	/**
 	 * brief Constructor takes a wide string of the process.
 	 * Expects that all the libraries are in the root dir
@@ -72,12 +73,6 @@ public:
 	* @return key class
 	*/
 	c_keys* GetKeyboard() { return key.get(); }
-
-	/**
-	* @brief Gets the shellcode object
-	* @return shellcode class
-	*/
-	c_shellcode GetShellcode() { return shellcode; }
 
 	/**
 	* brief Initializes the DMA
@@ -165,14 +160,7 @@ public:
 	 */
 	bool FixCr3();
 
-	/**
-	 * \brief Dumps the process memory at address (requires to be a valid PE Header) to the path
-	 * \param address the address to the PE Header(BaseAddress)
-	 * \param path the path where you wanna save dump to
-	 */
-	bool DumpMemory(uintptr_t address, std::string path);
-
-	/*This part is where all memory operations are done, such as read, write.*/
+	/*This part is where all memory read operations are done.*/
 
 	/**
 	 * \brief Scans the process for the signature.
@@ -183,33 +171,6 @@ public:
 	 * \return address of signature
 	 */
 	uint64_t FindSignature(const char* signature, uint64_t range_start, uint64_t range_end, int PID = 0);
-
-	/**
-	 * \brief Writes memory to the process 
-	 * \param address The address to write to
-	 * \param buffer The buffer to write
-	 * \param size The size of the buffer
-	 * \return 
-	 */
-	bool Write(uintptr_t address, void* buffer, size_t size) const;
-	bool Write(uintptr_t address, void* buffer, size_t size, int pid) const;
-
-	/**
-	 * \brief Writes memory to the process using a template
-	 * \param address to write to
-	 * \param value the value you'll write to the address
-	 */
-	template <typename T>
-	bool Write(void* address, T value)
-	{
-		return Write(address, &value, sizeof(T));
-	}
-
-	template <typename T>
-	bool Write(uintptr_t address, T value)
-	{
-		return Write(address, &value, sizeof(T));
-	}
 
 	/**
 	* brief Reads memory from the process
@@ -289,7 +250,7 @@ public:
 
 
 	/**
-	 * \brief Create a scatter handle, this is used for scatter read/write requests
+	 * \brief Create a scatter handle for batched read requests
 	 * \return Scatter handle
 	 */
 	VMMDLL_SCATTER_HANDLE CreateScatterHandle() const;
@@ -302,10 +263,10 @@ public:
 	void CloseScatterHandle(VMMDLL_SCATTER_HANDLE handle);
 
 	/**
-	 * \brief Adds a scatter read/write request to the handle
+	 * \brief Adds a scatter read request to the handle
 	 * \param handle the handle
-	 * \param address the address to read/write to 
-	 * \param buffer the buffer to read/write to
+	 * \param address the address to read from
+	 * \param buffer the buffer to read into
 	 * \param size the size of buffer
 	 */
 	void AddScatterReadRequest(VMMDLL_SCATTER_HANDLE handle, uint64_t address, void* buffer, size_t size);
@@ -316,17 +277,13 @@ public:
 		AddScatterReadRequest(handle, address, reinterpret_cast<void*>(buffer), sizeof(T));
 	}
 		
-	void AddScatterWriteRequest(VMMDLL_SCATTER_HANDLE handle, uint64_t address, void* buffer, size_t size);
-		
-
 	/**
-	 * \brief Executes all prepared scatter requests, note if you created a scatter handle with a pid
-	 * you'll need to specify the pid in the execute function. so we can clear the scatters from the handle.
+	 * \brief Executes all prepared scatter read requests. If the scatter handle was created with a pid,
+	 * specify the same pid here so scatters can be cleared from the handle.
 	 * \param handle 
 	 * \param pid 
 	 */
 	void ExecuteReadScatter(VMMDLL_SCATTER_HANDLE handle, int pid = 0);
-	void ExecuteWriteScatter(VMMDLL_SCATTER_HANDLE handle, int pid = 0);
 
 	/*the FPGA handle*/
 	VMM_HANDLE vHandle;
