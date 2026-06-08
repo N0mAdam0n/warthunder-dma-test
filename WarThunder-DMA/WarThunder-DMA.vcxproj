@@ -138,7 +138,7 @@
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>$(SolutionDir)$(ProjectName)\Config;$(SolutionDir)$(ProjectName)\SDK;$(SolutionDir)$(ProjectName)\Misc\Pch;$(SolutionDir)$(ProjectName)\Memory\nt;$(SolutionDir)$(ProjectName)\Memory;$(SolutionDir)$(ProjectName)\;$(SolutionDir)$(ProjectName)\Misc;$(SolutionDir)$(ProjectName)\GUI\imgui\freetype;$(SolutionDir)$(ProjectName)\GUI\imgui;$(SolutionDir)$(ProjectName)\GUI;$(SolutionDir)$(ProjectName)\Misc\NetConfig;$(SolutionDir)$(ProjectName)\Esp;$(SolutionDir)$(ProjectName)\Aim;$(SolutionDir)$(ProjectName)\Include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)$(ProjectName)\Config;$(SolutionDir)$(ProjectName)\SDK;$(SolutionDir)$(ProjectName)\Misc\Pch;$(SolutionDir)$(ProjectName)\Memory\nt;$(SolutionDir)$(ProjectName)\Memory;$(SolutionDir)$(ProjectName)\;$(SolutionDir)$(ProjectName)\Misc;$(SolutionDir)$(ProjectName)\GUI\imgui\freetype;$(SolutionDir)$(ProjectName)\GUI\imgui;$(SolutionDir)$(ProjectName)\GUI;$(SolutionDir)$(ProjectName)\Esp;$(SolutionDir)$(ProjectName)\Include</AdditionalIncludeDirectories>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
@@ -173,7 +173,7 @@
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;WIN32;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>$(SolutionDir)$(ProjectName)\Config;$(SolutionDir)$(ProjectName)\SDK;$(SolutionDir)$(ProjectName)\Misc\Pch;$(SolutionDir)$(ProjectName)\Memory\nt;$(SolutionDir)$(ProjectName)\Memory;$(SolutionDir)$(ProjectName)\;$(SolutionDir)$(ProjectName)\Misc;$(SolutionDir)$(ProjectName)\GUI\imgui\freetype;$(SolutionDir)$(ProjectName)\GUI\imgui;$(SolutionDir)$(ProjectName)\GUI;$(SolutionDir)$(ProjectName)\Misc\NetConfig;$(SolutionDir)$(ProjectName)\Esp;$(SolutionDir)$(ProjectName)\Aim;$(SolutionDir)$(ProjectName)\Include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)$(ProjectName)\Config;$(SolutionDir)$(ProjectName)\SDK;$(SolutionDir)$(ProjectName)\Misc\Pch;$(SolutionDir)$(ProjectName)\Memory\nt;$(SolutionDir)$(ProjectName)\Memory;$(SolutionDir)$(ProjectName)\;$(SolutionDir)$(ProjectName)\Misc;$(SolutionDir)$(ProjectName)\GUI\imgui\freetype;$(SolutionDir)$(ProjectName)\GUI\imgui;$(SolutionDir)$(ProjectName)\GUI;$(SolutionDir)$(ProjectName)\Esp;$(SolutionDir)$(ProjectName)\Include</AdditionalIncludeDirectories>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
@@ -200,7 +200,6 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Aim\Aim.cpp" />
     <ClCompile Include="Esp\Esp.cpp" />
     <ClCompile Include="GUI\GUI_main_menu.cpp">
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">pch.h</PrecompiledHeaderFile>
@@ -218,12 +217,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="GUI\imgui\imgui_demo.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
-    </ClCompile>
+
     <ClCompile Include="GUI\imgui\imgui_draw.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
@@ -267,15 +261,7 @@
     <ClCompile Include="Memory\InputManager.cpp" />
     <ClCompile Include="Memory\Memory.cpp" />
     <ClCompile Include="Memory\Registry.cpp" />
-    <ClCompile Include="Memory\Shellcode.cpp" />
-    <ClCompile Include="Misc\NetConfig\kmboxNet.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
-    </ClCompile>
-    <ClCompile Include="Misc\NetConfig\my_enc.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
-    </ClCompile>
+    <ClCompile Include="Misc\RunLogger.cpp" />
     <ClCompile Include="Misc\Pch\Pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
@@ -283,20 +269,14 @@
     <ClCompile Include="Misc\Vector.cpp" />
     <ClCompile Include="SDK\CCamera\CCamera.cpp" />
     <ClCompile Include="SDK\CGame\CGame.cpp" />
-    <ClCompile Include="SDK\CHud\CHud.cpp" />
     <ClCompile Include="SDK\CPlayer\CPlayer.cpp" />
-    <ClCompile Include="SDK\CPredictionEngine\CPredictionEngine.cpp" />
-    <ClCompile Include="SDK\CUnitInfo\CUnitInfo.cpp" />
     <ClCompile Include="SDK\CUnitList\CUnitList.cpp" />
-    <ClCompile Include="SDK\CUnit\CUnit.cpp" />
-    <ClCompile Include="SDK\CVehicleInfo\CVehicleInfo.cpp" />
     <ClCompile Include="SDK\globals\globals.cpp" />
+    <ClCompile Include="SDK\offset_scanner.cpp" />
     <ClCompile Include="SDK\offsets.cpp" />
-    <ClCompile Include="SDK\Structs\Structs.cpp" />
     <ClCompile Include="SDK\Warthunder.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Aim\Aim.h" />
     <ClInclude Include="Config\ConfigInstance.h" />
     <ClInclude Include="Config\lib\json.hpp" />
     <ClInclude Include="Config\Player_ESP_config.h" />
@@ -369,27 +349,23 @@
     <ClInclude Include="GUI\imgui\imstb_textedit.h" />
     <ClInclude Include="GUI\imgui\imstb_truetype.h" />
     <ClInclude Include="handlers\unit_handler\unit_handler.h" />
-    <ClInclude Include="Memory\DMAHandler.h" />
     <ClInclude Include="Memory\InputManager.h" />
     <ClInclude Include="Memory\Memory.h" />
     <ClInclude Include="Memory\nt\structs.h" />
     <ClInclude Include="Memory\Registry.h" />
-    <ClInclude Include="Memory\Shellcode.h" />
-    <ClInclude Include="Misc\NetConfig\HidTable.h" />
-    <ClInclude Include="Misc\NetConfig\kmboxNet.h" />
-    <ClInclude Include="Misc\NetConfig\my_enc.h" />
+    <ClInclude Include="Misc\RunLogger.h" />
     <ClInclude Include="Misc\Pch\pch.h" />
     <ClInclude Include="Misc\Vector.h" />
     <ClInclude Include="SDK\CCamera\CCamera.h" />
     <ClInclude Include="SDK\CGame\CGame.h" />
-    <ClInclude Include="SDK\CHud\CHud.h" />
     <ClInclude Include="SDK\CPlayer\CPlayer.h" />
-    <ClInclude Include="SDK\CPredictionEngine\CPredictionEngine.h" />
     <ClInclude Include="SDK\CUnitInfo\CUnitInfo.h" />
     <ClInclude Include="SDK\CUnitList\CUnitList.h" />
     <ClInclude Include="SDK\CUnit\CUnit.h" />
     <ClInclude Include="SDK\CVehicleInfo\CVehicleInfo.h" />
     <ClInclude Include="SDK\globals\globals.h" />
+    <ClInclude Include="SDK\offset_scanner.h" />
+    <ClInclude Include="SDK\Offset_manual_update.h" />
     <ClInclude Include="SDK\offsets.h" />
     <ClInclude Include="SDK\Structs\Structs.h" />
     <ClInclude Include="SDK\Warthunder.h" />

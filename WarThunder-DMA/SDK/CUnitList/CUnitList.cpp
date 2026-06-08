@@ -1,16 +1,11 @@
 #include "pch.h"
 #include "CUnitList.h"
-#include "../../memory/Memory.h"
+#include "../../Memory/Memory.h"
 #include "../offsets.h"
 
 auto CUnitList::is_valid() -> const bool
 {
 	return this->base_address != 0;
-}
-
-auto CUnitList::unit(const std::uint16_t idx) -> CUnit
-{
-	return CUnit(mem.Read<std::uintptr_t>(this->base_address + 0x8 * idx));
 }
 
 std::vector<CUnit> CUnitList::unit_scatter(VMMDLL_SCATTER_HANDLE handle, uint32_t count)

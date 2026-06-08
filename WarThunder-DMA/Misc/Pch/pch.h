@@ -70,13 +70,14 @@
 #pragma warning(disable: 4477)   // 'printf' : format string '%p' requires 'void*', but got uintptr_t etc. (we cast where critical)
 
 #include <vmmdll.h>
+#include "RunLogger.h"
 #define DEBUG_INFO
 #ifdef DEBUG_INFO
-#define LOG(fmt, ...) std::printf(fmt, ##__VA_ARGS__)
+#define LOG(fmt, ...) RunLogger::LogPrintf(fmt, ##__VA_ARGS__)
 #define LOGW(fmt, ...) std::wprintf(fmt, ##__VA_ARGS__)
 #else
-#define LOG
-#define LOGW
+#define LOG(...)
+#define LOGW(...)
 #endif
 #pragma comment(lib, "ws2_32.lib")
 #pragma comment(lib, "vmm.lib")
@@ -90,4 +91,3 @@
 
 #include "Vector.h"
 #include "Memory.h"
-//#include "CheatFunction.h"

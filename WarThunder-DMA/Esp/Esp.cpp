@@ -1,116 +1,87 @@
-//Esp.cpp
 #include "pch.h"
 #include "Esp.h"
 #include "ConfigInstance.h"
 
-#include <GUI_main_menu.h>
-#include "../handlers/unit_handler/unit_handler.h"
-
-
-
-void Esp::DrawPlayerEsp(ImDrawList* draw_list, CCamera camera, UnitHandler *unit_handler,CUnit local_unit)
+void Esp::DrawPlayerEsp(ImDrawList* draw_list, const CCamera& camera, UnitHandler* unit_handler,
+	const CUnit& local_unit, int screen_w, int screen_h)
 {
-    ImFont* font = ImGui::GetFont();
-    if (ConfigInstance.Player_ESP.Enable)
-    {
-        unit_handler->complete_units_mutex.lock();
-        std::vector<CUnit> units = unit_handler->complete_units;
-        unit_handler->complete_units_mutex.unlock();
+	if (!ConfigInstance.Player_ESP.Enable)
+		return;
 
-        for (auto& unit : units)
-        {
-            if (unit.position.IsZero())
-            {
-                continue;
-            }
-            Vector2 screenpos = CCamera::world_to_screen(unit.position,camera.view_matrix);
-            if (screenpos.IsZero()) {
-                continue;
-            }
-            int distance = Vector3::Distance(unit.position, local_unit.position);
-            if (distance > ConfigInstance.Player_ESP.Max_distance && (ConfigInstance.Player_ESP.Max_distance != 0))
-            {
-                continue;
-            }
-            std::string displayText;
-            if (ConfigInstance.Player_ESP.Show_unit_name)
-            {
-                displayText +=  unit.unit_info.vehicle_info.vehicle_name;
-            }
-            if (ConfigInstance.Player_ESP .Show_distanse) {
-                displayText += " " + std::to_string(static_cast<int>(distance)) + " m";
-            }
-            if (ConfigInstance.Player_ESP.show_invul_state)
-            {
-                if (unit.invul_state)
-                {
-                    displayText += "\n invul!";
-                }
-            }
-            ImVec2 text_size = ImGui::CalcTextSize(displayText.c_str());
+	ImFont* font = ImGui::GetFont();
 
-            ImVec2 text_pos = ImVec2(screenpos.x - text_size.x / 2.0f, screenpos.y /*- text_size.y / 2.0f*/);
+	unit_handler->complete_units_mutex.lock();
+	std::vector<CUnit> units = unit_handler->complete_units;
+	unit_handler->complete_units_mutex.unlock();
 
-            
-            draw_list->AddText(font, ConfigInstance.Player_ESP.font_size, text_pos, ConfigInstance.Player_ESP.text_color, displayText.c_str());
+	for (const auto& unit : units)
+	{
+		if (unit.position.IsZero())
+			continue;
 
-            if (ConfigInstance.Player_ESP.Enable_simple_box)
-            {
+		const Vector2 screenpos = CCamera::world_to_screen(unit.position, camera.view_matrix, screen_w, screen_h);
+		if (screenpos.IsZero())
+			continue;
 
-                Vector3 worldMin = unit.position + unit.boundsmin;
-                Vector3 worldMax = unit.position + unit.boundsmax;
+		const int distance = static_cast<int>(Vector3::Distance(unit.position, local_unit.position));
+		if (ConfigInstance.Player_ESP.Max_distance != 0 && distance > ConfigInstance.Player_ESP.Max_distance)
+			continue;
 
+		std::string displayText;
+		if (ConfigInstance.Player_ESP.Show_unit_name)
+			displayText += unit.unit_info.vehicle_info.vehicle_name;
+		if (ConfigInstance.Player_ESP.Show_distanse)
+			displayText += " " + std::to_string(distance) + " m";
+		if (ConfigInstance.Player_ESP.show_invul_state && unit.invul_state)
+			displayText += "\n invul!";
 
-                std::vector<Vector3> worldCorners = {
-                    Vector3(worldMin.x, worldMin.y, worldMin.z),
-                    Vector3(worldMax.x, worldMin.y, worldMin.z),
-                    Vector3(worldMin.x, worldMax.y, worldMin.z),
-                    Vector3(worldMax.x, worldMax.y, worldMin.z),
-                    Vector3(worldMin.x, worldMin.y, worldMax.z),
-                    Vector3(worldMax.x, worldMin.y, worldMax.z),
-                    Vector3(worldMin.x, worldMax.y, worldMax.z),
-                    Vector3(worldMax.x, worldMax.y, worldMax.z)
-                };
+		const ImVec2 text_size = ImGui::CalcTextSize(displayText.c_str());
+		const ImVec2 text_pos(screenpos.x - text_size.x * 0.5f, screenpos.y);
+		draw_list->AddText(font, ConfigInstance.Player_ESP.font_size, text_pos,
+			ConfigInstance.Player_ESP.text_color, displayText.c_str());
 
+		if (!ConfigInstance.Player_ESP.Enable_simple_box)
+			continue;
 
-                Vector2 screenMin = Vector2(FLT_MAX, FLT_MAX);
-                Vector2 screenMax = Vector2(-FLT_MAX, -FLT_MAX);
-                bool anyVisible = false;
+		const Vector3 worldMin = unit.position + unit.boundsmin;
+		const Vector3 worldMax = unit.position + unit.boundsmax;
+		const std::vector<Vector3> worldCorners = {
+			Vector3(worldMin.x, worldMin.y, worldMin.z),
+			Vector3(worldMax.x, worldMin.y, worldMin.z),
+			Vector3(worldMin.x, worldMax.y, worldMin.z),
+			Vector3(worldMax.x, worldMax.y, worldMin.z),
+			Vector3(worldMin.x, worldMin.y, worldMax.z),
+			Vector3(worldMax.x, worldMin.y, worldMax.z),
+			Vector3(worldMin.x, worldMax.y, worldMax.z),
+			Vector3(worldMax.x, worldMax.y, worldMax.z)
+		};
 
+		Vector2 screenMin(FLT_MAX, FLT_MAX);
+		Vector2 screenMax(-FLT_MAX, -FLT_MAX);
+		bool anyVisible = false;
 
-                for (Vector3 corner : worldCorners)
-                {
-                    Vector2 screenPos = CCamera::world_to_screen(corner, camera.view_matrix);
-                    if (screenPos.IsZero()) continue; 
+		for (const Vector3& corner : worldCorners)
+		{
+			const Vector2 cornerScreen = CCamera::world_to_screen(corner, camera.view_matrix, screen_w, screen_h);
+			if (cornerScreen.IsZero())
+				continue;
 
-                    anyVisible = true;
+			anyVisible = true;
+			screenMin.x = std::min(screenMin.x, cornerScreen.x);
+			screenMin.y = std::min(screenMin.y, cornerScreen.y);
+			screenMax.x = std::max(screenMax.x, cornerScreen.x);
+			screenMax.y = std::max(screenMax.y, cornerScreen.y);
+		}
 
-
-                    screenMin.x = std::min(screenMin.x, screenPos.x);
-                    screenMin.y = std::min(screenMin.y, screenPos.y);
-                    screenMax.x = std::max(screenMax.x, screenPos.x);
-                    screenMax.y = std::max(screenMax.y, screenPos.y);
-                }
-
-  
-                if (anyVisible) {
-                    draw_list->AddRect(
-                        ImVec2(screenMin.x, screenMin.y),
-                        ImVec2(screenMax.x, screenMax.y),
-                        ConfigInstance.Player_ESP.box_color,
-                        0.0f, 0,
-                        ConfigInstance.Player_ESP.box_thickness
-                    );
-                }
-            }
-
-        }
-    }
-    
-   
-
-
-
-
-
+		if (anyVisible)
+		{
+			draw_list->AddRect(
+				ImVec2(screenMin.x, screenMin.y),
+				ImVec2(screenMax.x, screenMax.y),
+				ConfigInstance.Player_ESP.box_color,
+				0.0f, 0,
+				ConfigInstance.Player_ESP.box_thickness
+			);
+		}
+	}
 }

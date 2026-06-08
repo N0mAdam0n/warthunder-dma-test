@@ -531,117 +531,6 @@ bool Memory::FixCr3()
 	return false;
 }
 
-bool Memory::DumpMemory(uintptr_t address, std::string path)
-{
-	LOG("[!] Memory dumping currently does not rebuild the IAT table, imports will be missing from the dump.\n");
-	IMAGE_DOS_HEADER dos { };
-	Read(address, &dos, sizeof(IMAGE_DOS_HEADER));
-
-	//Check if memory has a PE 
-	if (dos.e_magic != 0x5A4D) //Check if it starts with MZ
-	{
-		LOG("[-] Invalid PE Header\n");
-		return false;
-	}
-
-	IMAGE_NT_HEADERS64 nt;
-	Read(address + dos.e_lfanew, &nt, sizeof(IMAGE_NT_HEADERS64));
-
-	//Sanity check
-	if (nt.Signature != IMAGE_NT_SIGNATURE || nt.OptionalHeader.Magic != IMAGE_NT_OPTIONAL_HDR64_MAGIC)
-	{
-		LOG("[-] Failed signature check\n");
-		return false;
-	}
-	//Shouldn't change ever. so const 
-	const size_t target_size = nt.OptionalHeader.SizeOfImage;
-	//Crashes if we don't make it a ptr :(
-	auto target = std::unique_ptr<uint8_t[]>(new uint8_t[target_size]);
-
-	//Read whole modules memory
-	Read(address, target.get(), target_size);
-	auto nt_header = (PIMAGE_NT_HEADERS64)(target.get() + dos.e_lfanew);
-	auto sections = (PIMAGE_SECTION_HEADER)(target.get() + dos.e_lfanew + FIELD_OFFSET(IMAGE_NT_HEADERS, OptionalHeader) + nt.FileHeader.SizeOfOptionalHeader);
-
-	for (size_t i = 0; i < nt.FileHeader.NumberOfSections; i++, sections++)
-	{
-		//Rewrite the file offsets to the virtual addresses
-		LOG("[!] Rewriting file offsets at 0x%llx size 0x%llx\n", (unsigned long long)sections->VirtualAddress, (unsigned long long)sections->Misc.VirtualSize);
-		sections->PointerToRawData = sections->VirtualAddress;
-		sections->SizeOfRawData = sections->Misc.VirtualSize;
-	}
-
-	auto debug = (PIMAGE_DEBUG_DIRECTORY)(target.get() + nt_header->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_DEBUG].VirtualAddress);
-	debug->PointerToRawData = debug->AddressOfRawData;
-
-	//Find all modules used by this process
-	//auto descriptor = Read<IMAGE_IMPORT_DESCRIPTOR>(address + ntHeader->OptionalHeader.DataDirectory[1].VirtualAddress);
-
-	//int descriptor_count = 0;
-	//int thunk_count = 0;
-
-	/*std::vector<ModuleData> modulelist;
-	while (descriptor.Name) {
-		auto first_thunk = Read<IMAGE_THUNK_DATA>(moduleAddr + descriptor.FirstThunk);
-		auto original_first_thunk = Read<IMAGE_THUNK_DATA>(moduleAddr + descriptor.OriginalFirstThunk);
-		thunk_count = 0;
-
-		char ModuleName[256];
-		ReadMemory(moduleAddr + descriptor.Name, (void*)&ModuleName, 256);
-
-		std::string DllName = ModuleName;
-
-		ModuleData tmpModuleData;
-
-		//if(std::find(modulelist.begin(), modulelist.end(), tmpModuleData) == modulelist.end())
-		//	modulelist.push_back(tmpModuleData);
-		while (original_first_thunk.u1.AddressOfData) {
-			char name[256];
-			ReadMemory(moduleAddr + original_first_thunk.u1.AddressOfData + 0x2, (void*)&name, 256);
-
-			std::string str_name = name;
-			auto thunk_offset{ thunk_count * sizeof(uintptr_t) };
-
-			//if (str_name.length() > 0)
-			//	imports[str_name] = moduleAddr + descriptor.FirstThunk + thunk_offset;
-
-			++thunk_count;
-			first_thunk = Read<IMAGE_THUNK_DATA>(moduleAddr + descriptor.FirstThunk + sizeof(IMAGE_THUNK_DATA) * thunk_count);
-			original_first_thunk = Read<IMAGE_THUNK_DATA>(moduleAddr + descriptor.OriginalFirstThunk + sizeof(IMAGE_THUNK_DATA) * thunk_count);
-		}
-
-		++descriptor_count;
-		descriptor = Read<IMAGE_IMPORT_DESCRIPTOR>(moduleAddr + ntHeader->OptionalHeader.DataDirectory[1].VirtualAddress + sizeof(IMAGE_IMPORT_DESCRIPTOR) * descriptor_count);
-	}*/
-
-	//Rebuild import table
-
-	//LOG("[!] Creating new import section\n");
-
-	//Create New Import Section
-
-	//Build new import Table
-
-	//Dump file
-	const auto dumped_file = CreateFileW(std::wstring(path.begin(), path.end()).c_str(), GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_COMPRESSED, NULL);
-	if (dumped_file == INVALID_HANDLE_VALUE)
-	{
-		LOG("[!] Failed creating file: %i\n", GetLastError());
-		return false;
-	}
-
-	if (!WriteFile(dumped_file, target.get(), static_cast<DWORD>(target_size), NULL, NULL))
-	{
-		LOG("[!] Failed writing file: %i\n", GetLastError());
-		CloseHandle(dumped_file);
-		return false;
-	}
-
-	LOG("[+] Successfully dumped memory at %s\n", path.c_str());
-	CloseHandle(dumped_file);
-	return true;
-}
-
 static const char* hexdigits =
 	"\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000"
 	"\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000"
@@ -699,26 +588,6 @@ uint64_t Memory::FindSignature(const char* signature, uint64_t range_start, uint
 	}
 
 	return first_match;
-}
-
-bool Memory::Write(uintptr_t address, void* buffer, size_t size) const
-{
-	if (!VMMDLL_MemWrite(this->vHandle, current_process.PID, address, static_cast<PBYTE>(buffer), size))
-	{
-		LOG("[!] Failed to write Memory at 0x%llx\n", (unsigned long long)address);
-		return false;
-	}
-	return true;
-}
-
-bool Memory::Write(uintptr_t address, void* buffer, size_t size, int pid) const
-{
-	if (!VMMDLL_MemWrite(this->vHandle, pid, address, static_cast<PBYTE>(buffer), size))
-	{
-		LOG("[!] Failed to write Memory at 0x%llx\n", (unsigned long long)address);
-		return false;
-	}
-	return true;
 }
 
 bool Memory::Read(uintptr_t address, void* buffer, size_t size) const
@@ -779,36 +648,12 @@ void Memory::AddScatterReadRequest(VMMDLL_SCATTER_HANDLE handle, uint64_t addres
 	}
 }
 
-void Memory::AddScatterWriteRequest(VMMDLL_SCATTER_HANDLE handle, uint64_t address, void* buffer, size_t size)
-{
-	if (!VMMDLL_Scatter_PrepareWrite(handle, address, static_cast<PBYTE>(buffer), size))
-	{
-		LOG("[!] Failed to prepare scatter write at 0x%llx\n", (unsigned long long)address);
-	}
-}
-
 void Memory::ExecuteReadScatter(VMMDLL_SCATTER_HANDLE handle, int pid)
 {
 	if (pid == 0)
 		pid = current_process.PID;
 
 	if (!VMMDLL_Scatter_ExecuteRead(handle))
-	{
-		LOG("[-] Failed to Execute Scatter Read\n");
-	}
-	//Clear after using it
-	if (!VMMDLL_Scatter_Clear(handle, pid, VMMDLL_FLAG_NOCACHE))
-	{
-		LOG("[-] Failed to clear Scatter\n");
-	}
-}
-
-void Memory::ExecuteWriteScatter(VMMDLL_SCATTER_HANDLE handle, int pid)
-{
-	if (pid == 0)
-		pid = current_process.PID;
-
-	if (!VMMDLL_Scatter_Execute(handle))
 	{
 		LOG("[-] Failed to Execute Scatter Read\n");
 	}

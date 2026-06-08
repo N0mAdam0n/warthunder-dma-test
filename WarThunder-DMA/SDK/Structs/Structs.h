@@ -1,6 +1,5 @@
 #pragma once
-
-
+#include <cstdint>
 
 enum GuiState : std::uint8_t
 {
@@ -12,16 +11,3 @@ enum GuiState : std::uint8_t
 	SPAWN_MENU = 8,
 	LOADING = 10
 };
-
-
-struct RAngle
-{
-	float yaw, pitch;
-	RAngle(float yaw_, float pitch_) : yaw(yaw_), pitch(pitch_) {}
-	RAngle() : yaw(0), pitch(0) {}
-
-
-
-
-};
-

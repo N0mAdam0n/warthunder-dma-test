@@ -1,30 +1,25 @@
 #pragma once
 
-#include "../SDK/CUnit/CUnit.h"
-#include <Warthunder.h>
 #include <atomic>
+#include <mutex>
 #include <thread>
+#include <vector>
+
+#include "Warthunder.h"
+#include "CUnit/CUnit.h"
 
 class UnitHandler
 {
 public:
-	UnitHandler(Warthunder *wt);
-	std::vector<CUnit> complete_units;
-	std::mutex complete_units_mutex;
-
-	// Lightweight consumer thread that copies the latest snapshot from Warthunder
-	// (positions are now enriched by the producer).
-	std::atomic<bool> running{true};
-	std::thread fast_thread;
+	explicit UnitHandler(Warthunder* wt);
+	~UnitHandler() { Stop(); }
 
 	void Stop();
 
-	~UnitHandler()
-	{
-		Stop();
-	}
+	std::vector<CUnit> complete_units;
+	std::mutex complete_units_mutex;
+	std::atomic<bool> running{ true };
 
 private:
-	// temp_units removed after refactor (direct move to complete_units)
+	std::thread fast_thread;
 };
-
